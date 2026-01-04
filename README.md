@@ -1,17 +1,24 @@
 <div align="center">
-  <img src="docs/assets/logo-full.png" alt="Koala Logo" width="400"/>
-  
-  # Koala
+  <img src="docs/assets/logo-full.png" alt="Koala Logo" width="100%"/>
+
+  # Koala.AI
   [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
   [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
   [![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
   [![Linting: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+</div>
+
+## 🎥 Implementation Demo
+
+<div align="center">
+  
+[![Koala Implementation Demo](https://img.youtube.com/vi/QmH2iwbtwkc/maxresdefault.jpg)](https://www.youtube.com/watch?v=QmH2iwbtwkc)
+
+**[▶️ Watch the Full Implementation Walkthrough](https://www.youtube.com/watch?v=QmH2iwbtwkc)**
+
+*Complete demo video showing Koala in action*
 
 </div>
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Checked with mypy](https://img.shields.io/badge/mypy-checked-blue)](http://mypy-lang.org/)
-[![Linting: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 ---
 
@@ -744,13 +751,6 @@ pre-commit run --all-files
 - `.add_pre_guard(step_id, guard)` - Validate before execution
 - `.add_post_guard(step_id, guard)` - Validate after execution
 
----
-
-## 📄 License
-
-This project is licensed under the **Apache License 2.0**.
-
----
 
 <div align="center">
 
