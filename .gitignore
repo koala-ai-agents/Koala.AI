@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+.env/
+*.egg-info/
+.pytest_cache/
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv         # Windows environment
+.venv-wsl     # WSL2 Linux environment
+airflow_env
+airflow/
+airflow_backup/
+
+logs/

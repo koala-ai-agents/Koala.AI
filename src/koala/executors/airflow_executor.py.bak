@@ -1,0 +1,524 @@
+"""Apache Airflow executor for Koala flows.
+
+This module provides integration with Apache Airflow by translating Kola DAGFlows
+into Airflow DAGs and executing them via the Airflow REST API.
+
+Requirements:
+    - Apache Airflow running (separate installation)
+    - pip install kola[airflow]
+
+Example:
+    >>> from koala.executors import AirflowExecutor
+    >>> from koala.flow import dag
+    >>>
+    >>> flow = dag("my-flow").step("a", "add", x=1, y=2).build()
+    >>>
+    >>> executor = AirflowExecutor(
+    ...     airflow_url="http://localhost:8080",
+    ...     auth=("admin", "admin"),
+    ...     dags_folder="/path/to/airflow/dags"
+    ... )
+    >>> results = executor.run_dagflow(flow, registry)
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import time
+from typing import Any, Callable, Dict, Optional
+
+try:
+    import requests
+except ImportError:
+    raise ImportError(
+        "AirflowExecutor requires requests library. "
+        "Install with: pip install kola[airflow]"
+    )
+
+from ..flow import DAGFlow, FlowError
+from ..guards import GuardsRegistry
+from ..observability import logger, metrics, tracer
+
+
+class AirflowExecutor:
+    """Execute Koala flows by delegating to Apache Airflow.
+
+    This executor translates Kola DAGFlows into Airflow DAG Python code,
+    deploys them to Airflow's dags folder, triggers execution via REST API,
+    and polls for completion.
+
+    Attributes:
+        airflow_url: Base URL of Airflow webserver (e.g., http://localhost:8080)
+        auth: Tuple of (username, password) for Airflow basic auth
+        poll_interval: Seconds to wait between status checks
+        dags_folder: Path to Airflow's dags directory for DAG deployment
+        timeout: Maximum seconds to wait for DAG completion (None = no timeout)
+    """
+
+    def __init__(
+        self,
+        airflow_url: str = "http://localhost:8080",
+        auth: Optional[tuple] = None,
+        poll_interval: int = 2,
+        dags_folder: Optional[str] = None,
+        timeout: Optional[int] = 300,
+    ):
+        """Initialize AirflowExecutor.
+
+        Args:
+            airflow_url: Airflow webserver URL
+            auth: Basic auth credentials (username, password)
+            poll_interval: Polling interval in seconds
+            dags_folder: Path to Airflow dags directory
+            timeout: Max execution time in seconds (None = no timeout)
+        """
+        self.airflow_url = airflow_url.rstrip("/")
+        self.auth = auth or ("admin", "admin")
+        self.poll_interval = poll_interval
+        self.dags_folder = dags_folder
+        self.timeout = timeout
+        self.session = requests.Session()
+        self.session.auth = self.auth
+
+    def run_dagflow(
+        self,
+        flow: DAGFlow,
+        registry: Dict[str, Callable[..., Any]],
+        guards: Optional[GuardsRegistry] = None,
+    ) -> Dict[str, Any]:
+        """Execute a Kola DAGFlow using Apache Airflow.
+
+        Steps:
+        1. Translate DAGFlow to Airflow Python code
+        2. Deploy DAG file to Airflow's dags folder
+        3. Trigger DAG execution via REST API
+        4. Poll until completion or timeout
+        5. Fetch and return results
+
+        Args:
+            flow: The DAGFlow to execute
+            registry: Mapping of action names to callable functions
+            guards: Optional guardrails registry (currently not passed to Airflow)
+
+        Returns:
+            Dictionary mapping step IDs to their results
+
+        Raises:
+            FlowError: If Airflow execution fails or times out
+            ValueError: If configuration is invalid
+        """
+        trace_id = tracer.start_trace()
+        tracer.record(
+            trace_id,
+            "airflow_executor_started",
+            flow_id=flow.id,
+            airflow_url=self.airflow_url,
+        )
+        logger.info(
+            "airflow_executor_started",
+            flow_id=flow.id,
+            trace_id=trace_id,
+        )
+        metrics.inc("airflow_executor_runs")
+
+        try:
+            # Step 1: Translate DAGFlow to Airflow code
+            dag_code = self._translate_to_airflow(flow, registry)
+            tracer.record(trace_id, "dag_translated", flow_id=flow.id)
+
+            # Step 2: Deploy DAG file
+            if not self.dags_folder:
+                raise ValueError(
+                    "dags_folder must be set to deploy DAGs. "
+                    "Point to Airflow's dags directory (e.g., /opt/airflow/dags)"
+                )
+
+            self._write_dag_file(flow.id, dag_code)
+            tracer.record(trace_id, "dag_deployed", flow_id=flow.id)
+
+            # Wait a bit for Airflow to discover the DAG
+            time.sleep(3)
+
+            # Step 3: Trigger DAG execution
+            run_id = self._trigger_dag(flow.id, conf={"kola_trace_id": trace_id})
+            tracer.record(trace_id, "dag_triggered", flow_id=flow.id, run_id=run_id)
+            logger.info("dag_triggered", flow_id=flow.id, run_id=run_id, trace_id=trace_id)
+
+            # Step 4: Poll for completion
+            results = self._poll_until_complete(flow.id, run_id, trace_id)
+
+            # Step 5: Success
+            tracer.record(trace_id, "airflow_executor_completed", flow_id=flow.id)
+            logger.info("airflow_executor_completed", flow_id=flow.id, trace_id=trace_id)
+            metrics.inc("airflow_executor_success")
+
+            return results
+
+        except Exception as e:
+            tracer.record(trace_id, "airflow_executor_failed", error=str(e))
+            logger.info("airflow_executor_failed", error=str(e), trace_id=trace_id)
+            metrics.inc("airflow_executor_failures")
+            raise
+
+    def _translate_to_airflow(
+        self, flow: DAGFlow, registry: Dict[str, Callable[..., Any]]
+    ) -> str:
+        """Translate Kola DAGFlow to Airflow DAG Python code.
+
+        Generates a complete Airflow DAG file with:
+        - PythonOperator for each step
+        - Task dependencies from flow edges
+        - Execution function that loads tools from koala registry
+
+        Args:
+            flow: DAGFlow to translate
+            registry: Tool registry (used to document available actions)
+
+        Returns:
+            Python code as string
+        """
+        # Build dependency mapping for handling $result references
+        incoming_edges = {}
+        for from_step, to_step in flow.edges:
+            incoming_edges.setdefault(to_step, []).append(from_step)
+
+        # Validate all tools are in registry before generating
+        for step in flow.steps:
+            if step.action not in registry:
+                raise ValueError(
+                    f"Tool '{step.action}' not found in registry. "
+                    f"Ensure tool is decorated with @tool and registered in default_registry."
+                )
+
+        # Generate DAG header with version-independent dynamic import approach
+        dag_code = f'''# Auto-generated Airflow DAG from Koala flow: {flow.id}
+# Generated by Kola-AI AirflowExecutor
+# DO NOT EDIT - This file is managed by Kola
+
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime, timedelta
+import sys
+import os
+
+def execute_kola_step(**context):
+    """Execute a Kola step by calling the embedded tool function."""
+    # Get step config from task context
+    step_id = context['params']['step_id']
+    action = context['params']['action']
+    args = context['params']['args']
+
+    # Get the function from embedded tools
+    func = _TOOL_FUNCTIONS[action]
+
+    # Handle $result references via XCom
+    resolved_args = {{}}
+    for key, value in args.items():
+        if isinstance(value, str) and value.startswith("$result."):
+            # Extract upstream step ID
+            parts = value.split("$result.", 1)[1].split(".", 1)
+            upstream_step = parts[0]
+            # Pull result from XCom
+            ti = context['ti']
+            upstream_result = ti.xcom_pull(task_ids=upstream_step)
+            # Navigate nested result if needed (e.g., $result.add.sum)
+            if len(parts) > 1:
+                for key_part in parts[1].split("."):
+                    upstream_result = upstream_result[key_part]
+                resolved_args[key] = upstream_result
+            else:
+                resolved_args[key] = upstream_result
+        else:
+            resolved_args[key] = value
+
+    # Execute the tool
+    result = func(**resolved_args)
+
+    # Return result for downstream tasks
+    return result
+'''
+
+        # Embed tool functions as source code
+        import inspect
+        for step in flow.steps:
+            if step.action not in registry:
+                raise ValueError(f"Tool '{step.action}' not found in registry")
+
+            func = registry[step.action]
+            try:
+                func_source = inspect.getsource(func)
+                # Clean up indentation
+                func_source = inspect.cleandoc(func_source)
+                dag_code += f"\n# Tool: {step.action}\n{func_source}\n"
+                dag_code += f"_TOOL_FUNCTIONS['{step.action}'] = {func.__name__}\n"
+            except (OSError, TypeError):
+                # Can't get source (built-in or C function)
+                raise ValueError(
+                    f"Cannot serialize tool '{step.action}'. "
+                    f"Tool functions must be defined in Python source files, not built-ins."
+                )
+
+        dag_code += f'''
+# Define DAG
+default_args = {{
+    'owner': 'kola',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'retries': 1,
+    'retry_delay': timedelta(seconds=30),
+}}
+
+with DAG(
+    dag_id='{flow.id}',
+    default_args=default_args,
+    description='Koala flow: {flow.id} (version {flow.version})',
+    schedule=None,  # Triggered manually by Kola
+    catchup=False,
+    tags=['kola-generated', 'version-{flow.version}'],
+) as dag:
+'''
+
+        # Create a task for each step
+        for step in flow.steps:
+            # Serialize step args to JSON-safe format
+            args_str = json.dumps(step.args)
+
+            dag_code += f'''
+    {step.id} = PythonOperator(
+        task_id='{step.id}',
+        python_callable=execute_kola_step,
+        params={{
+            'step_id': '{step.id}',
+            'action': '{step.action}',
+            'args': {args_str},
+        }},
+    )
+'''
+
+        # Define task dependencies
+        if flow.edges:
+            dag_code += "\n    # Task dependencies\n"
+            for from_id, to_id in flow.edges:
+                dag_code += f"    {from_id} >> {to_id}\n"
+
+        return dag_code
+
+    def _write_dag_file(self, dag_id: str, code: str) -> None:
+        """Write DAG code to Airflow's dags folder.
+
+        Args:
+            dag_id: Unique DAG identifier
+            code: Python code for the DAG
+
+        Raises:
+            OSError: If unable to write file
+        """
+        if not self.dags_folder:
+            raise ValueError("dags_folder not configured")
+
+        os.makedirs(self.dags_folder, exist_ok=True)
+        file_path = os.path.join(self.dags_folder, f"kola_{dag_id}.py")
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(code)
+
+        logger.info("dag_file_written", path=file_path, dag_id=dag_id)
+
+        # Wait for Airflow to parse the DAG (give it up to 45 seconds)
+        self._wait_for_dag_parsed(dag_id, timeout=45)
+
+    def _wait_for_dag_parsed(self, dag_id: str, timeout: int = 45) -> None:
+        """Wait for Airflow to parse and recognize the DAG.
+
+        Args:
+            dag_id: DAG identifier to wait for
+            timeout: Maximum seconds to wait
+
+        Raises:
+            FlowError: If DAG not found after timeout
+        """
+        url = f"{self.airflow_url}/api/v1/dags/{dag_id}"
+        start_time = time.time()
+
+        logger.info("waiting_for_dag_parse", dag_id=dag_id, timeout=timeout)
+
+        while time.time() - start_time < timeout:
+            try:
+                response = self.session.get(url, timeout=5)
+                if response.status_code == 200:
+                    logger.info("dag_parsed", dag_id=dag_id, elapsed=time.time() - start_time)
+                    return
+                elif response.status_code == 404:
+                    # DAG not yet parsed, wait and retry
+                    time.sleep(3)
+                    continue
+                else:
+                    # Unexpected status
+                    response.raise_for_status()
+            except requests.RequestException:
+                # Network error, wait and retry
+                time.sleep(3)
+                continue
+
+        raise FlowError(
+            f"DAG '{dag_id}' not found in Airflow after {timeout}s. "
+            f"Check DAG file at {self.dags_folder}/kola_{dag_id}.py for syntax errors. "
+            f"Use: docker exec airflow-standalone airflow dags list-import-errors"
+        )
+
+    def _trigger_dag(self, dag_id: str, conf: Optional[Dict[str, Any]] = None) -> str:
+        """Trigger a DAG run via Airflow REST API.
+
+        Args:
+            dag_id: DAG identifier to trigger
+            conf: Optional configuration dict passed to DAG
+
+        Returns:
+            DAG run ID from Airflow
+
+        Raises:
+            FlowError: If trigger fails or DAG not found
+        """
+        url = f"{self.airflow_url}/api/v1/dags/{dag_id}/dagRuns"
+
+        payload = {
+            "conf": conf or {},
+        }
+
+        try:
+            response = self.session.post(url, json=payload, timeout=10)
+
+            if response.status_code == 404:
+                raise FlowError(
+                    f"DAG '{dag_id}' not found in Airflow. "
+                    f"Check that DAG file exists in {self.dags_folder} and Airflow has parsed it."
+                )
+
+            response.raise_for_status()
+            data = response.json()
+            return data["dag_run_id"]
+
+        except requests.RequestException as e:
+            raise FlowError(f"Failed to trigger DAG '{dag_id}': {e}")
+
+    def _get_dag_run_status(self, dag_id: str, run_id: str) -> Dict[str, Any]:
+        """Get DAG run status from Airflow.
+
+        Args:
+            dag_id: DAG identifier
+            run_id: Run identifier
+
+        Returns:
+            Status dictionary from Airflow API
+
+        Raises:
+            FlowError: If status check fails
+        """
+        url = f"{self.airflow_url}/api/v1/dags/{dag_id}/dagRuns/{run_id}"
+
+        try:
+            response = self.session.get(url, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            raise FlowError(f"Failed to get status for DAG '{dag_id}' run '{run_id}': {e}")
+
+    def _poll_until_complete(
+        self, dag_id: str, run_id: str, trace_id: str
+    ) -> Dict[str, Any]:
+        """Poll Airflow until DAG run completes or times out.
+
+        Args:
+            dag_id: DAG identifier
+            run_id: Run identifier
+            trace_id: Trace ID for observability
+
+        Returns:
+            Results dictionary from completed DAG
+
+        Raises:
+            FlowError: If DAG fails or times out
+        """
+        start_time = time.time()
+
+        while True:
+            # Check timeout
+            if self.timeout and (time.time() - start_time) > self.timeout:
+                raise FlowError(
+                    f"DAG '{dag_id}' run '{run_id}' timed out after {self.timeout} seconds"
+                )
+
+            # Get current status
+            status = self._get_dag_run_status(dag_id, run_id)
+            state = status.get("state", "unknown")
+
+            tracer.record(trace_id, "dag_poll", dag_id=dag_id, state=state)
+
+            if state == "success":
+                # Fetch results from XCom
+                return self._fetch_results(dag_id, run_id)
+
+            elif state in ("failed", "error"):
+                # DAG failed
+                raise FlowError(
+                    f"Airflow DAG '{dag_id}' run '{run_id}' failed with state: {state}"
+                )
+
+            elif state in ("running", "queued"):
+                # Still executing, continue polling
+                time.sleep(self.poll_interval)
+
+            else:
+                # Unknown state
+                logger.info("unknown_dag_state", dag_id=dag_id, state=state)
+                time.sleep(self.poll_interval)
+
+    def _fetch_results(self, dag_id: str, run_id: str) -> Dict[str, Any]:
+        """Fetch task results from Airflow XCom.
+
+        Args:
+            dag_id: DAG identifier
+            run_id: Run identifier
+
+        Returns:
+            Dictionary mapping task IDs to their return values
+
+        Note:
+            This fetches XCom values for all tasks in the DAG run.
+        """
+        # Get list of task instances for this DAG run
+        url = f"{self.airflow_url}/api/v1/dags/{dag_id}/dagRuns/{run_id}/taskInstances"
+
+        try:
+            response = self.session.get(url, timeout=10)
+            response.raise_for_status()
+            task_instances = response.json().get("task_instances", [])
+        except requests.RequestException as e:
+            logger.info("failed_to_fetch_task_instances", error=str(e))
+            # Return empty results if we can't fetch
+            return {}
+
+        # Fetch XCom for each task
+        results = {}
+        for task_instance in task_instances:
+            task_id = task_instance.get("task_id")
+            if not task_id:
+                continue
+
+            # Get XCom value (return_value key)
+            xcom_url = (
+                f"{self.airflow_url}/api/v1/dags/{dag_id}/dagRuns/{run_id}/"
+                f"taskInstances/{task_id}/xcomEntries/return_value"
+            )
+
+            try:
+                xcom_response = self.session.get(xcom_url, timeout=10)
+                if xcom_response.status_code == 200:
+                    xcom_data = xcom_response.json()
+                    results[task_id] = xcom_data.get("value")
+            except requests.RequestException:
+                # XCom may not exist for all tasks
+                continue
+
+        return results

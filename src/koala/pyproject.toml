@@ -1,0 +1,14 @@
+[project]
+name = "koala"
+version = "0.0.0"
+description = "Local Koala framework (packaged for Airflow image install)"
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "Proprietary" }
+
+[project.urls]
+Homepage = "https://example.local"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

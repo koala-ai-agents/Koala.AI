@@ -1,0 +1,95 @@
+site_name: Koala Framework
+site_description: Lightweight AI workflow orchestration framework
+site_author: Koala Contributors
+site_url: https://yourusername.github.io/koala
+
+repo_name: yourusername/koala
+repo_url: https://github.com/yourusername/koala
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/logo.png
+  logo: assets/logo.png
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - autorefs
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
+  - User Guide:
+      - Flows: guide/flows.md
+      - Tools: guide/tools.md
+      - Guardrails: guide/guardrails.md
+      - Executors: guide/executors.md
+      - Observability: guide/observability.md
+  - Integrations:
+      - Apache Airflow: integrations/airflow.md
+      - LLM Providers: integrations/llm.md
+      - Kafka: integrations/kafka.md
+  - API Reference:
+      - Flow API: api/flow.md
+      - Tools API: api/tools.md
+      - Executors API: api/executors.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Testing: development/testing.md
+      - Architecture: development/architecture.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/koala
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/koala/
