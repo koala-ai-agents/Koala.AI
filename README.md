@@ -71,7 +71,6 @@ Koala is a **Python framework** for building and orchestrating AI agent workflow
 
 ### 📈 Observability
 - **Structured Logging**: JSON-formatted logs with context
-- **Metrics**: Prometheus-compatible metrics collection
 - **Distributed Tracing**: Track execution across services
 
 ### ⚡ Multiple Executors
@@ -253,7 +252,6 @@ _AIRFLOW_WWW_USER_PASSWORD=airflow
 
 See `.env.example` for complete list of optional configurations:
 - Database connections
--       integration
 - API authentication
 - Observability settings
 - State management
@@ -288,7 +286,6 @@ docker-compose up -d
 - `airflow-apiserver` - Execution API
 - `airflow-triggerer` - Async triggers
 - `postgres` - Database
-- `redis` - Message broker
 
 ### Step 3: Access Airflow UI
 
@@ -581,7 +578,7 @@ More examples in [`examples/`](examples/) and [`cookbook/`](cookbook/) directori
 │  ┌────────────────────────────────────────────────────┐ │
 │  │              Ingress/API Layer                     │ │
 │  ├────────────────────────────────────────────────────┤ │
-│  │  • REST API (FastAPI)            • Auth            │ │
+│  │  • REST API (FastAPI)  • Kafka  • Auth             │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
@@ -598,7 +595,7 @@ koala/
 │   ├── llm.py              # LLM client (OpenAI-compatible)
 │   ├── observability.py    # Logging, metrics, tracing
 │   ├── api.py              # FastAPI REST endpoints
-│   ├── ingress.py          # event adapters
+│   ├── ingress.py          # Kafka & event adapters
 │   ├── output.py           # Output handlers (webhook, file)
 │   ├── state_store.py      # State persistence
 │   └── executors/
