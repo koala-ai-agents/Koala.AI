@@ -97,7 +97,7 @@ Koala is a **Python framework** for building and orchestrating AI agent workflow
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/koala.git
+git clone https://github.com/koala-ai-agents/Koala.AI
 cd koala
 
 # Create virtual environment
@@ -112,7 +112,7 @@ pip install -e ".[dev]"
 
 ```bash
 # Copy environment template
-cp .env.example .env
+cp .example.env .env
 
 # Edit .env and add your LLM API key
 # nano .env  # or use any text editor
@@ -565,7 +565,6 @@ More examples in [`examples/`](examples/) and [`cookbook/`](cookbook/) directori
 │  │         Executors (Pluggable Backends)             │ │
 │  ├────────────────────────────────────────────────────┤ │
 │  │  • LocalExecutor    (Thread-based)                 │ │
-│  │  • ProcessExecutor  (Multi-process)                │ │
 │  │  • AirflowExecutor  (Distributed)                  │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
@@ -576,9 +575,9 @@ More examples in [`examples/`](examples/) and [`cookbook/`](cookbook/) directori
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
 │  ┌────────────────────────────────────────────────────┐ │
-│  │              Ingress/API Layer                     │ │
+│  │                    API Layer                       │ │
 │  ├────────────────────────────────────────────────────┤ │
-│  │  • REST API (FastAPI)  • Kafka  • Auth             │ │
+│  │             • REST API (FastAPI)                   │ │
 │  └────────────────────────────────────────────────────┘ │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
