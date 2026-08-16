@@ -71,6 +71,25 @@ include = [
     "src/koala/py.typed",
 ]
 
+# Quarantined legacy modules — never ship in the published distribution.
+[tool.hatch.build.targets.wheel]
+packages = ["src/koala"]
+exclude = [
+    "src/koala/_legacy/**",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "src/koala/_legacy/**",
+    ".venv/**",
+    ".mypy_cache/**",
+    ".ruff_cache/**",
+    ".pytest_cache/**",
+    "htmlcov/**",
+    "site/**",
+    "logs/**",
+]
+
 [tool.ruff]
 line-length = 88
 target-version = "py312"

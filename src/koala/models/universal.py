@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -265,7 +265,7 @@ class UniversalProvider(BaseProvider):
 
         if r.status_code >= 400:
             self._raise_for_status(r.status_code, r.text)
-        return r.json()
+        return cast(dict[str, Any], r.json())
 
     def _raise_for_status(self, status: int, body: str) -> None:
         snippet = body[:500] if body else ""

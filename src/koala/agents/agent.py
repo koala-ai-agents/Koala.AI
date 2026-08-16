@@ -58,8 +58,9 @@ from .result import RunResult
 class BaseAgent(ABC):
     """Abstract agent contract.
 
-    Concrete agents must implement ``astream``. ``arun`` / ``run`` are
-    provided by default and drive ``astream`` to collect a ``RunResult``.
+    Concrete agents must implement ``astream`` (event stream) and ``arun``
+    (run-to-completion returning a ``RunResult``). ``run`` is a sync
+    convenience layer over ``arun``.
     """
 
     name: str
@@ -71,6 +72,17 @@ class BaseAgent(ABC):
         input: str | list[Message],
         /,
     ) -> AsyncIterator[Event]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def arun(
+        self,
+        input: str | list[Message],
+        *,
+        deps: Any = None,
+        ctx: RunContext | None = None,
+        session_id: str | None = None,
+    ) -> RunResult:
         raise NotImplementedError
 
 

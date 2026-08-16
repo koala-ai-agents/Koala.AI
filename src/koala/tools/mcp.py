@@ -243,8 +243,12 @@ class MCPToolset:
             if client_kwargs:
                 import httpx
 
+                # The mcp SDK vendors its own httpx build under `httpx2`, so
+                # its type stubs disagree with the runtime-installed httpx.
+                # At runtime both point to the same package.
                 return streamable_http_client(
-                    url, http_client=httpx.AsyncClient(**client_kwargs)
+                    url,
+                    http_client=httpx.AsyncClient(**client_kwargs),  # type: ignore[arg-type]
                 )
             return streamable_http_client(url)
 
@@ -319,7 +323,9 @@ class MCPToolset:
                         session=session,
                         name=tool.name,
                         description=tool.description or "",
-                        schema=dict(tool.inputSchema or {}),
+                        # `inputSchema` is the wire-protocol field name;
+                        # mcp SDK stubs alias it inconsistently.
+                        schema=dict(tool.inputSchema or {}),  # type: ignore[attr-defined]
                     )
                 )
         except Exception:

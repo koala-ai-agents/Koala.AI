@@ -129,8 +129,8 @@ class LocalExecutor:
                             await submit(m)
         except (StepExecutionError, FlowError):
             # Cancel remaining running steps so we don't leak background work.
-            for t in list(running.keys()):
-                t.cancel()
+            for pending in list(running.keys()):
+                pending.cancel()
             # Await cancellations to clean up.
             await asyncio.gather(*running.keys(), return_exceptions=True)
             raise

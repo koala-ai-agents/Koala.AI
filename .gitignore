@@ -35,6 +35,7 @@ logs/
 
 # IDE
 .idea/
+.vscode/
 *.swp
 
 # Docs build output

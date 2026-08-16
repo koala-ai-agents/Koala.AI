@@ -306,9 +306,11 @@ class Model:
         end: str = "\n",
     ) -> str:
         """Sync convenience: stream a completion and print it live."""
+        from typing import cast
+
         from ..ui import show as _show
 
-        return _show(self, input, end=end)
+        return cast(str, _show(self, input, end=end))
 
     async def ashow(
         self,
@@ -317,6 +319,8 @@ class Model:
         end: str = "\n",
     ) -> str:
         """Async version of :meth:`show`."""
+        from typing import cast
+
         from ..ui import ashow as _ashow
 
-        return await _ashow(self, input, end=end)
+        return cast(str, await _ashow(self, input, end=end))

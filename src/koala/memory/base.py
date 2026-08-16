@@ -1,9 +1,8 @@
 """Abstract memory backend for per-session conversation history.
 
-`BaseMemory` is a small async contract: append/get/clear/sessions. It is
-distinct from the legacy `koala.memory_legacy.MemoryStore` which is a
-generic key/value store. This L4 memory is specifically about conversation
-history keyed by ``session_id`` — the shape agents need for multi-turn.
+`BaseMemory` is a small async contract: append/get/clear/sessions. It stores
+conversation history keyed by ``session_id`` — the shape agents need for
+multi-turn interactions.
 
 All methods are ``async`` (even for backends that could be sync) so higher
 layers can await memory ops uniformly without special-casing.

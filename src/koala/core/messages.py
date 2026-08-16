@@ -108,7 +108,9 @@ class Message:
         return Message(role="assistant", content=[TextBlock(text=text)])
 
     @staticmethod
-    def tool(tool_call_id: str, content: str | dict[str, Any]) -> "Message":
+    def tool(
+        tool_call_id: str, content: str | dict[str, Any] | list[Any]
+    ) -> "Message":
         """Build a tool-response message tied to a prior tool call."""
         return Message(
             role="tool",
