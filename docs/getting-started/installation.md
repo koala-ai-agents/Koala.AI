@@ -28,7 +28,6 @@ pip install -e ".[dev]"
 | `dev` | pytest, pytest-asyncio, pytest-cov, ruff, black, isort, mypy, pre-commit | Development toolchain |
 | `mcp` | `mcp>=1.0` | `koala.tools.mcp.MCPToolset` (stdio, SSE, streamable HTTP) |
 | `otel` | `opentelemetry-api`, `-sdk`, `-semantic-conventions` | Real GenAI-semconv span export from `koala.observability` |
-| `airflow` | (nothing — see note) | `koala.orchestration.AirflowExecutor` |
 | `docs` | mkdocs, mkdocs-material, mkdocstrings | Building this documentation site |
 
 Install multiple at once:
@@ -36,15 +35,6 @@ Install multiple at once:
 ```bash
 uv pip install -e ".[dev,mcp,otel]"
 ```
-
-### About the `airflow` extra
-
-`AirflowExecutor` generates DAG files that run inside your Airflow
-scheduler — the executor itself only needs `httpx` (already a base dep)
-to hit the Airflow REST API. To run Airflow locally, use the shipped
-`docker-compose.yaml` which builds a custom image based on
-`apache/airflow:3.1.5` with Koala pre-installed via the `Dockerfile` at
-the repo root.
 
 ## Verify the install
 

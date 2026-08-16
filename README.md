@@ -196,8 +196,7 @@ satisfies the L1 `Runnable` protocol. `$input.<key>` and
 `$result.<step_id>` references are substituted at run time. Independent
 branches run concurrently.
 
-Deploy the same `Flow` to Airflow with `AirflowExecutor` — it generates a
-runnable DAG file that calls back into your Python actions.
+
 
 ## Design
 
@@ -215,7 +214,7 @@ koala/
   behaviors/       L5 — Behavior, Persona, ToolPack, ApprovalPolicy,
                    OutputSchema, ModelSettings
   agents/          L6 — Agent, BaseAgent, AgentTool (handoff), RunResult
-  orchestration/   L7 — flow(), Flow, Step, LocalExecutor, AirflowExecutor
+  orchestration/   L7 — flow(), Flow, Step, LocalExecutor
   harness/         L8 — AgentSession (implements L1 Channel for HITL)
   ui/              show / ashow — print-simple output for any layer
 ```

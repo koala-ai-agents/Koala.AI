@@ -11,9 +11,6 @@ wheels/
 .venv-wsl/
 venv/
 env/
-airflow_env/
-airflow/
-airflow_backup/
 
 # Env files
 .env

@@ -37,13 +37,6 @@ dev = [
     "pre-commit>=3.6.0",
     "mypy>=1.8.0",
 ]
-# koala.orchestration.AirflowExecutor generates DAG files that call back into
-# your Python actions. The Airflow runtime itself is expected to already be
-# installed on the target scheduler / worker — pip install koala[airflow] is
-# NOT a substitute for a real Airflow install. This extra pulls in only the
-# httpx-based control-plane client bits Koala uses to talk to the REST API,
-# which are already covered by the base httpx dep.
-airflow = []
 # Model Context Protocol client — for MCPToolset.
 # See koala.tools.mcp.
 mcp = [
@@ -108,7 +101,6 @@ extend-exclude = '''
     \.eggs
   | \.git
   | \.venv
-  | airflow_env
   | build
   | dist
 )/

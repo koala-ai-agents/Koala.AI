@@ -20,7 +20,7 @@ layers below it. The whole design collapses to three ideas:
 ├────────────────────────────────────────────────────────────────────┤
 │  L8  koala.harness         AgentSession + Checkpointer             │
 │      koala.ui              show / ashow renderer                   │
-│  L7  koala.orchestration   flow, LocalExecutor, Airflow            │
+│  L7  koala.orchestration   flow, LocalExecutor                     │
 │  L6  koala.agents          Agent, BaseAgent, AgentTool             │
 │  L5  koala.behaviors       Persona, ToolPack, ApprovalPolicy       │
 │  L4  koala.memory          InMemoryMemory, SQLiteMemory            │
@@ -36,15 +36,8 @@ The observability module is cross-cutting — layers L2, L3, and L6 emit
 spans through it, but nothing depends on it at runtime (all OTel calls
 degrade to no-ops when the SDK isn't installed).
 
-Executors at L7 are pluggable and don't preserve identical semantics.
-`LocalExecutor` runs Runnables in-process and consumes their full event
-stream directly. `AirflowExecutor` compiles a Flow to a thin generated
-DAG file plus a JSON spec, so anything that doesn't fit inside an Airflow
-task boundary (dependency injection, the L1 event stream, HITL approvals,
-OTel context) has to be bridged explicitly. Those bridges are documented
-per-executor rather than in this diagram — see
-[Airflow deployment](../guide/airflow.md) for the executor-specific
-surface and its knobs.
+`LocalExecutor` at L7 runs Runnables in-process and consumes their full
+event stream directly.
 
 ## Why layered
 

@@ -1,5 +1,5 @@
 # Koala Framework — common developer tasks.
-.PHONY: help install test test-fast test-integration lint lint-fix format format-check type-check pre-commit clean clean-logs clean-all docker-up docker-down docker-restart docker-logs all ci
+.PHONY: help install test test-fast test-integration lint lint-fix format format-check type-check pre-commit clean all ci
 
 help:  ## Show this help message
 	@echo "Koala Framework - Available Commands"
@@ -42,25 +42,7 @@ clean:  ## Clean build artifacts and cache
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-	rm -rf build/ dist/ .coverage htmlcov/ .pytest_cache/ .ruff_cache/ .mypy_cache/
-
-clean-logs:  ## Clean Airflow logs
-	rm -rf logs/
-	mkdir -p logs
-
-clean-all: clean clean-logs  ## Clean everything including logs
-
-docker-up:  ## Start Airflow with Docker Compose (for AirflowExecutor testing)
-	docker-compose up -d
-
-docker-down:  ## Stop Airflow
-	docker-compose down
-
-docker-restart:  ## Restart Airflow
-	docker-compose restart
-
-docker-logs:  ## Show Airflow logs
-	docker-compose logs -f
+	rm -rf build/ dist/ .coverage htmlcov/ .pytest_cache/ .ruff_cache/ .mypy_cache/ site/
 
 all: clean format lint test  ## Run full CI pipeline (format, lint, test)
 

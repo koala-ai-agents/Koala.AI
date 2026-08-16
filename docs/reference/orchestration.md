@@ -1,7 +1,6 @@
 # `koala.orchestration`
 
-L7 — DAG orchestration over any `Runnable`. See the [Flow guide](../guide/flow.md)
-and [Airflow guide](../guide/airflow.md).
+L7 — DAG orchestration over any `Runnable`. See the [Flow guide](../guide/flow.md).
 
 ## Fluent builder
 
@@ -22,14 +21,7 @@ one-shot scripts that don't need executor configuration.
 
 ::: koala.orchestration.executor.LocalExecutor
 
-## Airflow executor
-
-::: koala.orchestration.airflow.AirflowExecutor
-
 ## Errors
 
 ::: koala.orchestration.errors.FlowError
 ::: koala.orchestration.errors.StepExecutionError
-::: koala.orchestration.airflow.AirflowExecutorError
-::: koala.orchestration.airflow.AirflowAPIError
-::: koala.orchestration.airflow.ActionSerializationError

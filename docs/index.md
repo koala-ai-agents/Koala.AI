@@ -40,7 +40,7 @@ Set `LLM_API_KEY` (universal) or a provider-specific key like `GROQ_API_KEY` /
 | Memory | `koala.memory` | `InMemoryMemory`, `SQLiteMemory` — conversation history |
 | Behaviors | `koala.behaviors` | `Persona`, `ToolPack`, `ApprovalPolicy`, `OutputSchema`, `ModelSettings` |
 | Agents | `koala.agents` | `Agent` — tool loop, structured output, handoffs |
-| Orchestration | `koala.orchestration` | `flow()` + `LocalExecutor` + `AirflowExecutor` |
+| Orchestration | `koala.orchestration` | `flow()` + `LocalExecutor` |
 | Harness | `koala.harness` | `AgentSession` — streaming, HITL, `SQLiteCheckpointer` for durable sessions |
 | UI | `koala.ui` | `show` / `ashow` — one-line terminal renderer |
 | Observability | `koala.observability` | OpenTelemetry spans with GenAI semantic conventions |

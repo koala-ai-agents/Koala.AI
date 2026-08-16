@@ -114,10 +114,7 @@ DAG flows over any `Runnable`.
 - **`LocalExecutor`** — in-process async executor with concurrent
   independent-branch execution and `$input.<key>` / `$result.<step_id>`
   reference substitution.
-- **`AirflowExecutor`** — generates a runnable DAG file + calls back
-  into your Python actions via `airflow_runtime`.
-- **Errors**: `FlowError`, `StepExecutionError`, `AirflowExecutorError`,
-  `AirflowAPIError`, `ActionSerializationError`.
+- **Errors**: `FlowError`, `StepExecutionError`.
 
 ## L8 — `koala.harness`
 

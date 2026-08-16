@@ -105,7 +105,6 @@ nav:
       - MCP tools: guide/mcp.md
       - OpenTelemetry: guide/observability.md
       - Checkpointing: guide/checkpointing.md
-      - Airflow: guide/airflow.md
   - API Reference:
       - koala.core: reference/core.md
       - koala.models: reference/models.md

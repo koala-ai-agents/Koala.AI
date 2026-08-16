@@ -95,50 +95,6 @@ class Flow:
 
         return LocalExecutor().run(self, deps=deps, input=input)
 
-    def deploy_to_airflow(
-        self,
-        *,
-        input: dict[str, Any] | None = None,
-        conf: dict[str, Any] | None = None,
-        **executor_kwargs: Any,
-    ) -> dict[str, Any]:
-        """Deploy this Flow to Airflow, trigger a run, wait, return results.
-
-        One-call convenience wrapping :class:`AirflowExecutor`. All keyword
-        arguments after ``input`` / ``conf`` are forwarded to the executor
-        constructor.
-
-        Common ``executor_kwargs`` (see :class:`AirflowExecutor` for the
-        full list):
-
-        - ``airflow_url``, ``auth``, ``api_prefix`` — REST connection.
-        - ``dags_folder`` — where to write the DAG file + JSON spec.
-        - ``tags``, ``default_args``, ``dag_id_prefix``, ``input_key``.
-        - ``timeout``, ``poll_interval`` — trigger/wait budget.
-        - ``airflow_step_configs={step_id: {"pool", "queue",
-          "priority_weight", "retry_delay_seconds",
-          "on_failure_callback_ref", ...}}`` — Airflow-only per-step
-          overrides. These never leak into :class:`LocalExecutor`.
-        - ``deps_factory="module:callable"`` — build ``RunContext.deps``
-          on each worker.
-        - ``event_sink="module:callable"`` — forward every Koala Event
-          emitted by Agent steps.
-        - ``auto_unpause=False`` (default) — un-pause a paused DAG on
-          trigger. Left off by default because silently overriding an
-          operator's pause is a foot-gun.
-
-        Behind the scenes the executor writes a thin per-flow DAG file
-        plus a JSON spec to ``dags_folder``, waits for Airflow's scheduler
-        to parse the file, triggers a run via the REST API, polls for
-        completion, then reads each task's ``return_value`` XCom.
-
-        Returns a ``{step_id: result}`` dict pulled from each task's XCom.
-        """
-        from .airflow import AirflowExecutor
-
-        with AirflowExecutor(**executor_kwargs) as ex:
-            return ex.run(self, input=input, conf=conf)
-
 
 class FlowBuilder:
     """Fluent builder for a ``Flow``.

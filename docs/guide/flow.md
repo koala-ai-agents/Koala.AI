@@ -5,8 +5,7 @@ an `Agent`, `BaseTool`, `Model`, a plain Python callable, or anything
 satisfying the L1 `Runnable` protocol. Steps run concurrently when their
 dependencies are satisfied.
 
-Two executors ship: `LocalExecutor` (in-process, async) and `AirflowExecutor`
-(generates a real Airflow DAG — see [Airflow guide](airflow.md)).
+One executor ships: `LocalExecutor` (in-process, async).
 
 ## Building a Flow
 
@@ -140,9 +139,8 @@ running event loop.
 
 ## Per-step timeout and retries
 
-The `Step` dataclass carries `timeout` and `retries` fields. When you
-deploy the flow via `AirflowExecutor`, they become Airflow's
-`execution_timeout` and `retries` on the generated task.
+The `Step` dataclass carries `timeout` and `retries` fields for use by
+executors that honour them.
 
 ## Errors
 
@@ -175,7 +173,7 @@ for step in flow.steps:
 
 - `koala.orchestration.flow` — builder entry point.
 - `koala.orchestration.Flow`, `Step`, `FlowBuilder`, `StepAction`.
-- `koala.orchestration.LocalExecutor`, `AirflowExecutor`.
+- `koala.orchestration.LocalExecutor`.
 - `koala.orchestration.FlowError`, `StepExecutionError`.
 
 See the [API reference for `koala.orchestration`](../reference/orchestration.md).

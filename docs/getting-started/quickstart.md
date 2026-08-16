@@ -141,9 +141,7 @@ satisfies the L1 `Runnable` protocol. `$input.<key>` and
 `$result.<step_id>` references are substituted at run time. Independent
 branches run concurrently.
 
-Deploy the same `Flow` to Airflow with `AirflowExecutor` — it generates a
-DAG file that calls back into your Python actions. See the
-[Airflow guide](../guide/airflow.md).
+
 
 ## Next steps
 

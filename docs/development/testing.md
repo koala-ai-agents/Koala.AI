@@ -16,7 +16,7 @@ tests/
 ├── memory/                     # L4 (backends + agent integration)
 ├── behaviors/                  # L5 (builtins + agent integration)
 ├── agents/                     # L6 (tool loop, structured output, handoffs)
-├── orchestration/              # L7 (flow, executor, Airflow generator)
+├── orchestration/              # L7 (flow, executor)
 ├── harness/                    # L8 (session, checkpointing, HITL)
 ├── ui/                         # show / ashow
 ├── observability/              # OpenTelemetry span attributes

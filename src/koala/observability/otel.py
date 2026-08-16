@@ -18,10 +18,9 @@ Attribute names are hard-coded string literals rather than imported from
 ``opentelemetry.semconv._incubating.attributes.gen_ai_attributes``. The
 Python package's constant names have shifted between versions
 (``GEN_AI_SYSTEM`` vs ``GEN_AI_PROVIDER_NAME``, ``GEN_AI_AGENT_NAME``
-only added in ~0.55b) and different environments — including
-``apache/airflow:3.1.5`` — pin different versions. The semconv spec's
-attribute *names* are stable; we track those instead of the package's
-Python constants.
+only added in ~0.55b) and downstream environments routinely pin older
+versions. The semconv spec's attribute *names* are stable; we track those
+instead of the package's Python constants.
 """
 
 from __future__ import annotations

@@ -132,7 +132,7 @@ def test_flow_builder_type() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Flow convenience runners — flow.run() / flow.deploy_to_airflow()
+# Flow convenience runner — flow.run()
 # ---------------------------------------------------------------------------
 
 
@@ -161,42 +161,4 @@ def test_flow_run_forwards_input_and_deps() -> None:
     assert seen["called_with"] == (5, 6)
 
 
-def test_flow_deploy_to_airflow_wraps_executor_run(monkeypatch) -> None:
-    """deploy_to_airflow instantiates AirflowExecutor and forwards to .run()."""
-    from koala.orchestration import airflow as airflow_module
 
-    captured: dict = {}
-
-    class _FakeExecutor:
-        def __init__(self, **kwargs):
-            captured["ctor"] = kwargs
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            return None
-
-        def run(self, flow_, *, input=None, conf=None):
-            captured["run_flow"] = flow_
-            captured["run_input"] = input
-            captured["run_conf"] = conf
-            return {"stub_step": "stub_result"}
-
-    monkeypatch.setattr(airflow_module, "AirflowExecutor", _FakeExecutor)
-
-    f = flow("wired").step("s", _add, a=1, b=2).build()
-    result = f.deploy_to_airflow(
-        input={"topic": "koalas"},
-        airflow_url="http://x",
-        dag_tags=["custom"],
-    )
-
-    assert result == {"stub_step": "stub_result"}
-    assert captured["ctor"] == {
-        "airflow_url": "http://x",
-        "dag_tags": ["custom"],
-    }
-    assert captured["run_flow"] is f
-    assert captured["run_input"] == {"topic": "koalas"}
-    assert captured["run_conf"] is None

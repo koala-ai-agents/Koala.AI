@@ -50,7 +50,7 @@ your own code when planning.
 
 Local providers (`ollama`, `lmstudio`) declare a `base_url_env` field so
 you can point them at a different host without touching code. Set
-`OLLAMA_BASE_URL=http://host.docker.internal:11434/v1` in your Airflow
+`OLLAMA_BASE_URL=http://host.docker.internal:11434/v1` in any Docker
 container and every `Model("ollama/...")` inside picks it up automatically.
 
 Resolution order for `base_url`:
