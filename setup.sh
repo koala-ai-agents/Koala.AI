@@ -1,5 +1,5 @@
 #!/bin/bash
-# filepath: e:\01_Projects\02_Main\02_Intel_Industrial_Program\kola\setup.sh
+# filepath: Koala.AI/setup.sh
 
 set -e  # Exit on error
 
@@ -14,17 +14,7 @@ echo ""
 echo "📦 Installing Koala packages with dev dependencies..."
 pip install -e ".[dev,airflow,llm]"
 
-# Step 3: Install plugins if they exist
-if [ -d "plugins" ]; then
-    echo "📦 Installing plugins..."
-    if [ -f "plugins/setup.py" ] || [ -f "plugins/pyproject.toml" ]; then
-        pip install -e plugins
-    else
-        echo "⚠️  No setup.py or pyproject.toml found in plugins, skipping"
-    fi
-fi
-
-# Step 4: Create .env if not exists
+# Step 3: Create .env if not exists
 if [ ! -f .env ]; then
     echo ""
     echo "⚙️  Creating .env file..."

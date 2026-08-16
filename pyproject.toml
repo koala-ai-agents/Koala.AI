@@ -1,14 +1,16 @@
 [project]
 name = "koala"
 version = "0.1.0"
-description = "Koala-AI: lightweight flow orchestration (DAG/SM), tools registry, guards, observability, and adapters"
+description = "A Python framework for building AI agents: typed streaming, tool loops, multi-agent handoffs, HITL approval, and DAG orchestration."
+license = { file = "LICENSE" }
 readme = "README.md"
 authors = [
     { name = "Hariharan P R", email = "prhariharan2005@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
-    # Keep runtime deps minimal; tests depend on pytest
+    "httpx>=0.27",
+    "pydantic>=2.5",
 ]
 
 classifiers = [
@@ -20,10 +22,11 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/PR-HARIHARAN/Kola-AI"
-Issues = "https://github.com/PR-HARIHARAN/Kola-AI/issues"
+Homepage = "https://github.com/PR-HARIHARAN/Koala.AI"
+Issues = "https://github.com/PR-HARIHARAN/Koala.AI/issues"
 
 [project.optional-dependencies]
+# Development toolchain (tests, lint, format, types).
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
@@ -33,19 +36,34 @@ dev = [
     "isort>=5.13.0",
     "pre-commit>=3.6.0",
     "mypy>=1.8.0",
-    # example API demo
-    "fastapi",
-    "pydantic",
-    "uvicorn",
 ]
-airflow = [
-    "requests>=2.31.0",
+# koala.orchestration.AirflowExecutor generates DAG files that call back into
+# your Python actions. The Airflow runtime itself is expected to already be
+# installed on the target scheduler / worker — pip install koala[airflow] is
+# NOT a substitute for a real Airflow install. This extra pulls in only the
+# httpx-based control-plane client bits Koala uses to talk to the REST API,
+# which are already covered by the base httpx dep.
+airflow = []
+# Model Context Protocol client — for MCPToolset.
+# See koala.tools.mcp.
+mcp = [
+    "mcp>=1.0",
 ]
-postgres = [
-    "psycopg2-binary"
+# OpenTelemetry emitter with GenAI semantic conventions.
+# When installed, koala.observability.otel emits spans for Model calls,
+# Agent runs, and Tool executions. Bring your own exporter (OTLP, Console)
+# via the standard OTel SDK configuration.
+otel = [
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-semantic-conventions>=0.48b0",
 ]
-llm = [
-    "httpx"
+# Documentation site (mkdocs + material + mkdocstrings-python for auto API refs).
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+    "pymdown-extensions>=10.0",
 ]
 
 [build-system]
@@ -64,6 +82,9 @@ include = [
 line-length = 88
 target-version = "py312"
 src = ["src", "tests"]
+extend-exclude = [
+    "src/koala/_legacy",
+]
 
 [tool.ruff.lint]
 select = [
@@ -99,11 +120,24 @@ line_length = 88
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --strict-markers --cov=src/koala --cov-report=term-missing --cov-report=html"
+addopts = [
+    "-ra",
+    "-q",
+    "--strict-markers",
+    "--cov=src/koala",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=70",
+]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests that hit real LLM providers (needs env keys)",
+    "unit: marks pure unit tests",
+]
 
 [tool.mypy]
 python_version = "3.12"
@@ -111,3 +145,18 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
+
+# Coverage — omit legacy modules that are quarantined pending removal.
+[tool.coverage.run]
+source = ["src/koala"]
+omit = [
+    "src/koala/_legacy/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "\\.\\.\\.$",
+]

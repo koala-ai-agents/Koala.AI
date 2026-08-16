@@ -74,6 +74,12 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    # Koala: point every worker/scheduler/API server at Ollama on the host.
+    # host.docker.internal resolves to the host on Docker Desktop (Mac/Win) and
+    # via the extra_hosts entry below on Linux.
+    OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+    # Koala universal LLM key — most agents leave this empty for Ollama.
+    LLM_API_KEY: ${LLM_API_KEY:-}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
@@ -81,6 +87,10 @@ x-airflow-common:
     # Plugins are installed as a package in the image, not mounted as files
     # - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:0"
+  # Linux hosts need this to resolve host.docker.internal. Docker Desktop
+  # (Mac/Windows) resolves it automatically but the entry is a no-op there.
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   depends_on:
     &airflow-common-depends-on
     redis:

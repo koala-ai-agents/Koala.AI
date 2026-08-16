@@ -1,25 +1,50 @@
+# Python
 __pycache__/
 *.py[cod]
-.venv/
-venv/
-env/
-.env
-.env/
 *.egg-info/
-.pytest_cache/
-# Python-generated files
-__pycache__/
-*.py[oc]
 build/
 dist/
 wheels/
-*.egg-info
 
 # Virtual environments
-.venv         # Windows environment
-.venv-wsl     # WSL2 Linux environment
-airflow_env
+.venv/
+.venv-wsl/
+venv/
+env/
+airflow_env/
 airflow/
 airflow_backup/
 
+# Env files
+.env
+.env.local
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Runtime artifacts
 logs/
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+*.swp
+
+# Docs build output
+site/
+
+# uv lockfile — optional to commit; not committed for this project.
+uv.lock
+
+# Local .env for docker-compose (secrets)
+.env

@@ -1,0 +1,22 @@
+/* Force a strictly-monospaced font stack for code blocks so box-drawing
+ * characters (─ │ ┌ ┐ └ ┘ ├ ┤) render at exactly one cell wide.
+ * Roboto Mono (Material default) can render these fallback-fonted on some
+ * systems, breaking ASCII diagrams. */
+:root {
+  --md-code-font: "Consolas", "SFMono-Regular", "Menlo", "DejaVu Sans Mono",
+                  "Liberation Mono", "Courier New", monospace;
+}
+
+.md-typeset code,
+.md-typeset pre > code,
+.md-typeset .highlight code {
+  font-family: var(--md-code-font) !important;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keep box-drawn diagrams a bit tighter so the grid feels crisp. */
+.md-typeset pre > code {
+  line-height: 1.35;
+}

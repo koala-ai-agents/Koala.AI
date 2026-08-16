@@ -1,33 +1,36 @@
-# Koala Framework - Makefile for common tasks
-.PHONY: help install test lint format clean all pre-commit
+# Koala Framework — common developer tasks.
+.PHONY: help install test test-fast test-integration lint lint-fix format format-check type-check pre-commit clean clean-logs clean-all docker-up docker-down docker-restart docker-logs all ci
 
 help:  ## Show this help message
-	@echo "🐨 Koala Framework - Available Commands"
-	@echo "========================================"
+	@echo "Koala Framework - Available Commands"
+	@echo "===================================="
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-install:  ## Install package with dev dependencies
-	pip install -e ".[dev,airflow,llm]"
+install:  ## Install package with dev dependencies (uv preferred)
+	uv pip install -e ".[dev,mcp,otel]"
 
-test:  ## Run tests with coverage
-	pytest tests/ -v --cov=src/koala --cov-report=term-missing --cov-report=html
+test:  ## Run all tests with coverage (excludes integration tests unless env is set)
+	pytest tests/
 
 test-fast:  ## Run tests without coverage (faster)
-	pytest tests/ -v
+	pytest tests/ --no-cov
+
+test-integration:  ## Run env-gated live-provider integration tests
+	pytest tests/integration/ -m integration --no-cov -v
 
 lint:  ## Run linter (ruff)
-	ruff check src/ tests/ cookbook/
+	ruff check src/koala tests examples
 
-lint-fix:  ## Run linter and fix issues
-	ruff check --fix src/ tests/ cookbook/
+lint-fix:  ## Run linter and auto-fix issues
+	ruff check --fix src/koala tests examples
 
 format:  ## Format code with black and isort
-	black src/ tests/ cookbook/
-	isort src/ tests/ cookbook/
+	black src/koala tests examples
+	isort src/koala tests examples
 
 format-check:  ## Check formatting without modifying files
-	black --check src/ tests/ cookbook/
-	isort --check-only src/ tests/ cookbook/
+	black --check src/koala tests examples
+	isort --check-only src/koala tests examples
 
 type-check:  ## Run type checker (mypy)
 	mypy src/koala
@@ -47,7 +50,7 @@ clean-logs:  ## Clean Airflow logs
 
 clean-all: clean clean-logs  ## Clean everything including logs
 
-docker-up:  ## Start Airflow with Docker Compose
+docker-up:  ## Start Airflow with Docker Compose (for AirflowExecutor testing)
 	docker-compose up -d
 
 docker-down:  ## Stop Airflow
@@ -58,9 +61,6 @@ docker-restart:  ## Restart Airflow
 
 docker-logs:  ## Show Airflow logs
 	docker-compose logs -f
-
-airflow-test:  ## Test Airflow DAG generation
-	python cookbook/web_search_agent_airflow_clean.py
 
 all: clean format lint test  ## Run full CI pipeline (format, lint, test)
 

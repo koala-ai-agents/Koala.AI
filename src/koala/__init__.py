@@ -1,28 +1,64 @@
-# Export flow primitives
-# Export executors module for new import style
-from . import executors as executors
+"""Koala — a Python framework for building AI agents.
 
-# Export executors (backward compatibility)
-from .flow import DAGFlow as DAGFlow
-from .flow import LocalExecutor as LocalExecutor
-from .flow import ProcessExecutor as ProcessExecutor
-from .flow import Step as Step
+Top-level public API:
 
-# LLM adapter
-from .llm import LLMClient as LLMClient
+    from koala import Agent, Model, tool, AgentSession, show
 
-# Export observability helpers
-from .observability import logger as logger
-from .observability import metrics as metrics
-from .observability import redact as redact
-from .observability import tracer as tracer
+See ``koala.agents``, ``koala.models``, ``koala.tools``, ``koala.memory``,
+``koala.behaviors``, ``koala.orchestration``, ``koala.harness``, ``koala.ui``
+for the full surface.
+"""
 
-# Export state stores
-from .state_store import InMemoryStateStore as InMemoryStateStore
-from .state_store import SQLiteStateStore as SQLiteStateStore
-from .state_store import StateStore as StateStore
-from .state_store_postgres import PostgresStateStore as PostgresStateStore
+from __future__ import annotations
 
+# L6 — Agents
+from .agents import Agent as Agent
+from .agents import BaseAgent as BaseAgent
+from .agents import RunResult as RunResult
 
-def hello() -> str:
-    return "Hello from koala!"
+# L5 — Behaviors
+from .behaviors import ApprovalPolicy as ApprovalPolicy
+from .behaviors import Behavior as Behavior
+from .behaviors import ModelSettings as ModelSettings
+from .behaviors import OutputSchema as OutputSchema
+from .behaviors import Persona as Persona
+from .behaviors import ToolPack as ToolPack
+
+# L8 — Harness
+from .harness import AgentSession as AgentSession
+
+# L2 — Models
+from .models import Model as Model
+from .models import register_provider as register_provider
+
+# L3 — Tools
+from .tools import BaseTool as BaseTool
+from .tools import FunctionTool as FunctionTool
+from .tools import tool as tool
+
+# UI helpers
+from .ui import ashow as ashow
+from .ui import show as show
+
+__version__ = "0.1.0"
+
+__all__ = [
+    "Agent",
+    "BaseAgent",
+    "RunResult",
+    "AgentSession",
+    "Model",
+    "register_provider",
+    "tool",
+    "FunctionTool",
+    "BaseTool",
+    "Behavior",
+    "Persona",
+    "ToolPack",
+    "ApprovalPolicy",
+    "OutputSchema",
+    "ModelSettings",
+    "show",
+    "ashow",
+    "__version__",
+]

@@ -48,4 +48,4 @@ def test_readme_quickstart_present():
     # Check for basic README structure (flexible to handle different content)
     assert len(readme) > 100, "README should have substantial content"
     # Check for project name
-    assert "Koala" in readme or "koala" in readme or "Kola" in readme
+    assert "Koala" in readme or "koala" in readme

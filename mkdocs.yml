@@ -1,95 +1,130 @@
-site_name: Koala Framework
-site_description: Lightweight AI workflow orchestration framework
-site_author: Koala Contributors
-site_url: https://yourusername.github.io/koala
+site_name: Koala.AI
+site_description: A Python framework for building AI agents.
+site_author: Hariharan P R
+site_url: https://pr-hariharan.github.io/Koala.AI/
 
-repo_name: yourusername/koala
-repo_url: https://github.com/yourusername/koala
+repo_name: PR-HARIHARAN/Koala.AI
+repo_url: https://github.com/PR-HARIHARAN/Koala.AI
 edit_uri: edit/main/docs/
 
 theme:
   name: material
   language: en
+  logo: assets/logo.png
+  favicon: assets/logo.png
   palette:
-    - scheme: default
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    - scheme: slate
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
       primary: indigo
       accent: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-  font:
-    text: Roboto
-    code: Roboto Mono
-  favicon: assets/logo.png
-  logo: assets/logo.png
   features:
     - navigation.instant
     - navigation.tracking
     - navigation.tabs
     - navigation.sections
-    - navigation.expand
     - navigation.top
+    - navigation.footer
+    - navigation.indexes
     - search.suggest
     - search.highlight
     - content.code.copy
     - content.code.annotate
+    - toc.follow
 
 plugins:
   - search
   - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            heading_level: 2
+            docstring_style: google
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+            filters: ["!^_"]
 
 markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
   - pymdownx.highlight:
       anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
-  - admonition
   - pymdownx.details
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - attr_list
-  - md_in_html
-  - toc:
-      permalink: true
 
 nav:
   - Home: index.md
   - Getting Started:
       - Installation: getting-started/installation.md
-      - Quick Start: getting-started/quickstart.md
+      - Quickstart: getting-started/quickstart.md
       - Configuration: getting-started/configuration.md
-  - User Guide:
-      - Flows: guide/flows.md
+      - Providers: getting-started/providers.md
+  - Concepts:
+      - Architecture: concepts/architecture.md
+      - The layer stack: concepts/layers.md
+      - Runnable + events: concepts/runnable-and-events.md
+  - Guides:
+      - Agents: guide/agents.md
       - Tools: guide/tools.md
-      - Guardrails: guide/guardrails.md
-      - Executors: guide/executors.md
-      - Observability: guide/observability.md
-  - Integrations:
-      - Apache Airflow: integrations/airflow.md
-      - LLM Providers: integrations/llm.md
-      - Kafka: integrations/kafka.md
+      - Models: guide/models.md
+      - Memory: guide/memory.md
+      - Behaviors: guide/behaviors.md
+      - Structured output: guide/structured-output.md
+      - Handoffs: guide/handoffs.md
+      - Approval + HITL: guide/approval-hitl.md
+      - Sessions: guide/sessions.md
+      - Streaming (show): guide/streaming.md
+      - Flow orchestration: guide/flow.md
+      - MCP tools: guide/mcp.md
+      - OpenTelemetry: guide/observability.md
+      - Checkpointing: guide/checkpointing.md
+      - Airflow: guide/airflow.md
   - API Reference:
-      - Flow API: api/flow.md
-      - Tools API: api/tools.md
-      - Executors API: api/executors.md
+      - koala.core: reference/core.md
+      - koala.models: reference/models.md
+      - koala.tools: reference/tools.md
+      - koala.memory: reference/memory.md
+      - koala.behaviors: reference/behaviors.md
+      - koala.agents: reference/agents.md
+      - koala.orchestration: reference/orchestration.md
+      - koala.harness: reference/harness.md
+      - koala.ui: reference/ui.md
+      - koala.observability: reference/observability.md
   - Development:
       - Contributing: development/contributing.md
       - Testing: development/testing.md
-      - Architecture: development/architecture.md
+
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/koala
-    - icon: fontawesome/brands/python
-      link: https://pypi.org/project/koala/
+      link: https://github.com/PR-HARIHARAN/Koala.AI
