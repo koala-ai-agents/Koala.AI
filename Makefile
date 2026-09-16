@@ -44,6 +44,18 @@ clean:  ## Clean build artifacts and cache
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	rm -rf build/ dist/ .coverage htmlcov/ .pytest_cache/ .ruff_cache/ .mypy_cache/ site/
 
+build: clean  ## Build wheel and source distributions
+	uv build
+
+check-dist: build  ## Validate built distributions with twine
+	uvx twine check dist/*
+
+publish-test: check-dist  ## Publish distribution to TestPyPI
+	uv publish --publish-url https://test.pypi.org/legacy/
+
+publish: check-dist  ## Publish distribution to PyPI
+	uv publish
+
 all: clean format lint test  ## Run full CI pipeline (format, lint, test)
 
 ci: format-check lint type-check test  ## Run CI checks without modifying files

@@ -47,13 +47,24 @@ providers (`ollama`, `lmstudio`) need no key.
 ## Install
 
 ```bash
-git clone https://github.com/PR-HARIHARAN/Koala.AI
-cd Koala.AI
-uv venv                          # or: python -m venv .venv
-uv pip install -e ".[dev]"       # or: .venv/Scripts/activate && pip install -e ".[dev]"
+pip install koala-ai
 ```
 
-Requires Python 3.12+. The runtime footprint is two dependencies: `httpx`
+With optional extras:
+```bash
+pip install "koala-ai[mcp]"     # Model Context Protocol support
+pip install "koala-ai[otel]"    # OpenTelemetry tracing
+pip install "koala-ai[mcp,otel]" # All runtime extras
+```
+
+Or install from source for development:
+```bash
+git clone https://github.com/PR-HARIHARAN/Koala.AI
+cd Koala.AI
+uv sync --all-extras
+```
+
+Requires Python 3.12+. The runtime footprint is two core dependencies: `httpx`
 and `pydantic`.
 
 ## The five things you'll actually use

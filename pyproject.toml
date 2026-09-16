@@ -1,5 +1,5 @@
 [project]
-name = "koala"
+name = "koala-ai"
 version = "0.1.0"
 description = "A Python framework for building AI agents: typed streaming, tool loops, multi-agent handoffs, HITL approval, and DAG orchestration."
 license = { file = "LICENSE" }
@@ -63,15 +63,6 @@ docs = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.hatch.build]
-packages = [
-    "src/koala"
-]
-include = [
-    "src/koala/py.typed",
-]
-
-# Quarantined legacy modules — never ship in the published distribution.
 [tool.hatch.build.targets.wheel]
 packages = ["src/koala"]
 exclude = [
