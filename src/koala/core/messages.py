@@ -109,12 +109,18 @@ class Message:
 
     @staticmethod
     def tool(
-        tool_call_id: str, content: str | dict[str, Any] | list[Any]
+        tool_call_id: str,
+        content: str | dict[str, Any] | list[Any],
+        is_error: bool = False,
     ) -> "Message":
         """Build a tool-response message tied to a prior tool call."""
         return Message(
             role="tool",
-            content=[ToolResultBlock(tool_call_id=tool_call_id, content=content)],
+            content=[
+                ToolResultBlock(
+                    tool_call_id=tool_call_id, content=content, is_error=is_error
+                )
+            ],
         )
 
     # -- convenience views ------------------------------------------------------

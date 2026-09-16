@@ -39,6 +39,7 @@ from typing import Any, Callable, overload
 from pydantic import ValidationError
 
 from ..core.context import RunContext
+from ..core.errors import ModelRetry
 from .base import BaseTool
 from .errors import ToolExecutionError, ToolValidationError
 from .schema import ToolSpec, build_tool_spec
@@ -95,7 +96,7 @@ class FunctionTool(BaseTool):
             if self._is_async:
                 return await self.func(**validated)
             return await asyncio.to_thread(self.func, **validated)
-        except (ToolValidationError, ToolExecutionError):
+        except (ToolValidationError, ToolExecutionError, ModelRetry):
             raise  # already tagged; don't re-wrap
         except Exception as e:  # noqa: BLE001 — wrap ANY user error
             raise ToolExecutionError(self.name, e) from e

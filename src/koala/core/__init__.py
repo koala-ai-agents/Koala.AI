@@ -14,6 +14,7 @@ from __future__ import annotations
 from .approval import ApprovalDecision, ApprovalResult, ApprovalRule
 from .capabilities import Capability
 from .context import CancelToken, RunContext
+from .errors import ModelRetry
 from .events import (
     AwaitingApproval,
     Done,
@@ -74,6 +75,8 @@ __all__ = [
     # context
     "RunContext",
     "CancelToken",
+    # errors
+    "ModelRetry",
     # types
     "Usage",
     "ModelRef",
