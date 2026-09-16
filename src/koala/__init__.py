@@ -14,6 +14,7 @@ from __future__ import annotations
 # L6 — Agents
 from .agents import Agent as Agent
 from .agents import BaseAgent as BaseAgent
+from .agents import ContextPolicy as ContextPolicy
 from .agents import RunResult as RunResult
 
 # L5 — Behaviors
@@ -23,6 +24,10 @@ from .behaviors import ModelSettings as ModelSettings
 from .behaviors import OutputSchema as OutputSchema
 from .behaviors import Persona as Persona
 from .behaviors import ToolPack as ToolPack
+
+# L1 — Core
+from .core import ModelRetry as ModelRetry
+from .core import RetryPolicy as RetryPolicy
 
 # L8 — Harness
 from .harness import AgentSession as AgentSession
@@ -46,6 +51,9 @@ __all__ = [
     "Agent",
     "BaseAgent",
     "RunResult",
+    "ContextPolicy",
+    "ModelRetry",
+    "RetryPolicy",
     "AgentSession",
     "Model",
     "register_provider",

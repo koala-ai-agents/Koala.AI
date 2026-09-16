@@ -31,6 +31,7 @@ from ..behaviors.base import AgentSpec, Behavior
 from ..core.approval import ApprovalRule
 from ..core.capabilities import Capability
 from ..core.context import RunContext
+from ..core.errors import ModelRetry
 from ..core.events import (
     AwaitingApproval,
     Done,
@@ -42,7 +43,7 @@ from ..core.events import (
     ToolResult,
     UsageEvent,
 )
-from ..core.messages import Message, TextBlock, ToolResultBlock
+from ..core.messages import Message, TextBlock, ToolCallBlock, ToolResultBlock
 from ..memory.base import BaseMemory
 from ..models.model import Model
 from ..models.settings import ChatSettings
@@ -50,6 +51,7 @@ from ..observability.otel import agent_span, model_span, tool_span
 from ..tools.approval import evaluate_approval_chain
 from ..tools.base import BaseTool
 from ..tools.errors import ToolExecutionError, ToolValidationError
+from .context_policy import ContextPolicy
 from .errors import OutputParseError
 from .output import build_prompt_schema_hint, build_response_format, parse_output
 from .result import RunResult
@@ -121,6 +123,10 @@ class Agent(BaseAgent):
         max_iterations: int = 20,
         name: str = "agent",
         settings: ChatSettings | None = None,
+        parallel_tools: bool = True,
+        max_tool_concurrency: int = 10,
+        max_output_retries: int = 0,
+        context_policy: ContextPolicy | None = None,
     ) -> None:
         # 1. Model — coerce string shorthand.
         if isinstance(model, str):
@@ -190,6 +196,11 @@ class Agent(BaseAgent):
 
         # 7. Optional conversation memory (L4).
         self.memory: BaseMemory | None = memory
+
+        self.parallel_tools: bool = parallel_tools
+        self.max_tool_concurrency: int = max_tool_concurrency
+        self.max_output_retries: int = max_output_retries
+        self.context_policy: ContextPolicy | None = context_policy
 
         self.name = name
 
@@ -284,6 +295,7 @@ class Agent(BaseAgent):
                     Message.tool(
                         tool_call_id=event.result.tool_call_id,
                         content=event.result.content,
+                        is_error=event.result.is_error,
                     )
                 )
             elif isinstance(event, Error):
@@ -302,11 +314,16 @@ class Agent(BaseAgent):
         if self.memory is not None and stop_reason == "final_output":
             await self.memory.append(sid, new_turn_input + turn_messages)
 
+        recorded = ctx.metadata.pop("_final_messages", None)
+        messages_result = (
+            recorded
+            if recorded is not None
+            else (self._build_initial_messages(effective_input) + turn_messages)
+        )
+
         return RunResult(
             output=output,
-            messages=(
-                self._build_initial_messages(effective_input) + turn_messages
-            ),
+            messages=messages_result,
             usage=ctx.usage,
             iterations=iterations,
             stop_reason=stop_reason,
@@ -357,6 +374,7 @@ class Agent(BaseAgent):
             conversation_id=ctx.session_id,
         ) as ag_span:
             iterations_done = 0
+            output_retries_remaining = self.max_output_retries
             for _iteration in range(1, self.max_iterations + 1):
                 iterations_done = _iteration
                 if ctx.cancel.cancelled:
@@ -370,6 +388,13 @@ class Agent(BaseAgent):
                     yield Done(run_id=run_id)
                     return
 
+                # Apply context pruning policy if configured
+                effective_messages = (
+                    self.context_policy.prune(messages)
+                    if self.context_policy is not None
+                    else messages
+                )
+
                 assistant_msg: Message | None = None
                 turn_in_tokens = 0
                 turn_out_tokens = 0
@@ -381,7 +406,7 @@ class Agent(BaseAgent):
                     try:
                         async for m_event in self.model.provider.stream_chat(
                             self.model.name,
-                            messages,
+                            effective_messages,
                             merged_settings,
                             tools=tools_schema,
                             response_format=response_format,
@@ -441,6 +466,15 @@ class Agent(BaseAgent):
                                 agent_name=self.name,
                             )
                         except OutputParseError as e:
+                            if output_retries_remaining > 0:
+                                output_retries_remaining -= 1
+                                error_feedback = (
+                                    "Your response did not match the required schema. Validation errors:\n"
+                                    + "\n".join(f"- {err}" for err in e.errors)
+                                    + "\nPlease correct your response and output valid JSON matching the schema."
+                                )
+                                messages.append(Message.user(error_feedback))
+                                continue
                             ag_span.record_error(e)
                             ag_span.record_completion(
                                 iterations=iterations_done,
@@ -461,6 +495,7 @@ class Agent(BaseAgent):
                         input_tokens=ctx.usage.input_tokens,
                         output_tokens=ctx.usage.output_tokens,
                     )
+                    ctx.metadata["_final_messages"] = list(messages)
                     yield Output(value=final_output)
                     yield Done(run_id=run_id)
                     return
@@ -469,7 +504,10 @@ class Agent(BaseAgent):
                 # NOTE: we do NOT emit ToolCall here — the provider already
                 # emitted it during stream_chat when it finalized the
                 # accumulated args. Re-emitting would double-print in every
-                # downstream renderer.
+                # Execute each tool call from the assistant message.
+                approved_calls: list[ToolCallBlock] = []
+                denied_blocks: dict[str, ToolResultBlock] = {}
+
                 for call in assistant_msg.tool_calls:
                     # Approval flow: chain -> (optional resolver) -> decision.
                     decision: str = "allow"
@@ -507,7 +545,7 @@ class Agent(BaseAgent):
                                 )
 
                     if decision == "deny":
-                        tr = ToolResultBlock(
+                        denied_blocks[call.id] = ToolResultBlock(
                             tool_call_id=call.id,
                             content=(
                                 "Tool call denied"
@@ -516,74 +554,30 @@ class Agent(BaseAgent):
                             ),
                             is_error=True,
                         )
-                        yield ToolResult(result=tr)
-                        messages.append(Message.tool(call.id, tr.content))
-                        continue
+                    else:
+                        approved_calls.append(call)
 
-                    # decision == "allow" — proceed to execute.
+                # Execute approved calls (in parallel if enabled and multiple calls)
+                executed_map: dict[str, ToolResultBlock] = {}
+                if self.parallel_tools and len(approved_calls) > 1:
+                    sem = asyncio.Semaphore(self.max_tool_concurrency)
+                    tasks = [
+                        self._execute_single_tool(ctx, call, semaphore=sem)
+                        for call in approved_calls
+                    ]
+                    results = await asyncio.gather(*tasks)
+                    for call, res in zip(approved_calls, results, strict=True):
+                        executed_map[call.id] = res
+                else:
+                    for call in approved_calls:
+                        res = await self._execute_single_tool(ctx, call)
+                        executed_map[call.id] = res
 
-                    tool = self._tool_map.get(call.name)
-                    if tool is None:
-                        available = (
-                            ", ".join(sorted(self._tool_map.keys())) or "(none)"
-                        )
-                        tr = ToolResultBlock(
-                            tool_call_id=call.id,
-                            content=(
-                                f"Tool {call.name!r} not found. "
-                                f"Available: {available}"
-                            ),
-                            is_error=True,
-                        )
-                        yield ToolResult(result=tr)
-                        messages.append(Message.tool(call.id, tr.content))
-                        continue
-
-                    with tool_span(
-                        name=call.name,
-                        call_id=call.id,
-                        arguments=call.arguments,
-                        description=getattr(tool, "description", None),
-                    ) as t_span:
-                        try:
-                            result_value = await tool.run(ctx, call.arguments)
-                            content = self._serialize_tool_result(result_value)
-                            tr = ToolResultBlock(
-                                tool_call_id=call.id,
-                                content=content,
-                                is_error=False,
-                            )
-                            t_span.record_result(content, is_error=False)
-                        except ToolValidationError as e:
-                            tr = ToolResultBlock(
-                                tool_call_id=call.id,
-                                content=(
-                                    "Argument validation failed: "
-                                    + "; ".join(e.errors)
-                                ),
-                                is_error=True,
-                            )
-                            t_span.record_error(e)
-                        except ToolExecutionError as e:
-                            tr = ToolResultBlock(
-                                tool_call_id=call.id,
-                                content=(
-                                    f"Tool raised "
-                                    f"{type(e.original).__name__}: {e.original}"
-                                ),
-                                is_error=True,
-                            )
-                            t_span.record_error(e)
-                        except Exception as e:  # noqa: BLE001
-                            tr = ToolResultBlock(
-                                tool_call_id=call.id,
-                                content=f"Unexpected tool error: {e}",
-                                is_error=True,
-                            )
-                            t_span.record_error(e)
-
+                # Emit results and append to messages in exact original call order
+                for call in assistant_msg.tool_calls:
+                    tr = denied_blocks.get(call.id) or executed_map[call.id]
                     yield ToolResult(result=tr)
-                    messages.append(Message.tool(call.id, tr.content))
+                    messages.append(Message.tool(call.id, tr.content, is_error=tr.is_error))
 
             # Fell out of the loop — exceeded max_iterations.
             ag_span.record_completion(
@@ -739,6 +733,71 @@ class Agent(BaseAgent):
             except (TypeError, ValueError):
                 return str(value)
         return str(value)
+
+    async def _execute_single_tool(
+        self,
+        ctx: RunContext,
+        call: ToolCallBlock,
+        semaphore: asyncio.Semaphore | None = None,
+    ) -> ToolResultBlock:
+        tool = self._tool_map.get(call.name)
+        if tool is None:
+            available = ", ".join(sorted(self._tool_map.keys())) or "(none)"
+            return ToolResultBlock(
+                tool_call_id=call.id,
+                content=f"Tool {call.name!r} not found. Available: {available}",
+                is_error=True,
+            )
+
+        async def _run() -> ToolResultBlock:
+            with tool_span(
+                name=call.name,
+                call_id=call.id,
+                arguments=call.arguments,
+                description=getattr(tool, "description", None),
+            ) as t_span:
+                try:
+                    result_value = await tool.run(ctx, call.arguments)
+                    content = self._serialize_tool_result(result_value)
+                    t_span.record_result(content, is_error=False)
+                    return ToolResultBlock(
+                        tool_call_id=call.id,
+                        content=content,
+                        is_error=False,
+                    )
+                except ModelRetry as e:
+                    t_span.record_error(e)
+                    return ToolResultBlock(
+                        tool_call_id=call.id,
+                        content=f"Tool requested retry: {e.message}",
+                        is_error=True,
+                    )
+                except ToolValidationError as e:
+                    t_span.record_error(e)
+                    return ToolResultBlock(
+                        tool_call_id=call.id,
+                        content="Argument validation failed: " + "; ".join(e.errors),
+                        is_error=True,
+                    )
+                except ToolExecutionError as e:
+                    t_span.record_error(e)
+                    return ToolResultBlock(
+                        tool_call_id=call.id,
+                        content=f"Tool raised {type(e.original).__name__}: {e.original}",
+                        is_error=True,
+                    )
+                except Exception as e:  # noqa: BLE001
+                    t_span.record_error(e)
+                    return ToolResultBlock(
+                        tool_call_id=call.id,
+                        content=f"Unexpected tool error: {e}",
+                        is_error=True,
+                    )
+
+        if semaphore is not None:
+            async with semaphore:
+                return await _run()
+        return await _run()
 
 
 # ---------------------------------------------------------------------------
