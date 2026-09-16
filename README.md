@@ -5,8 +5,12 @@
 
   A Python framework for building AI agents.
 
+  [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://koala-ai-agents.github.io/Koala.AI/)
+  [![PyPI](https://img.shields.io/pypi/v/koala-ai.svg)](https://pypi.org/project/koala-ai/)
   [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
   [![Linting: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+  **[Documentation](https://koala-ai-agents.github.io/Koala.AI/)** • **[PyPI](https://pypi.org/project/koala-ai/)** • **[Issues](https://github.com/koala-ai-agents/Koala.AI/issues)**
 </div>
 
 ---
@@ -233,6 +237,11 @@ koala/
 Every layer speaks the same event vocabulary from `core`. `Agent`, `Model`,
 `Tool`, and `Flow` all satisfy the `Runnable` protocol, so anything that
 takes a `Runnable` can compose them uniformly.
+ 
+## Documentation
+
+Comprehensive guides, architecture overviews, and full API references are hosted at:
+👉 **[https://koala-ai-agents.github.io/Koala.AI/](https://koala-ai-agents.github.io/Koala.AI/)**
 
 ## Examples
 

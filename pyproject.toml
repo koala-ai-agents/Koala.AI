@@ -23,6 +23,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/koala-ai-agents/Koala.AI"
+Documentation = "https://koala-ai-agents.github.io/Koala.AI/"
 Issues = "https://github.com/koala-ai-agents/Koala.AI/issues"
 
 [project.optional-dependencies]
