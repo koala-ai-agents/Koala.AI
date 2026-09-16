@@ -14,6 +14,7 @@ Exports:
 from __future__ import annotations
 
 from .agent import Agent, AgentTool, BaseAgent
+from .context_policy import ContextPolicy
 from .errors import (
     AgentError,
     HandoffError,
@@ -30,6 +31,7 @@ __all__ = [
     "AgentTool",
     "RunResult",
     "StopReason",
+    "ContextPolicy",
     # errors
     "AgentError",
     "MaxIterationsError",
