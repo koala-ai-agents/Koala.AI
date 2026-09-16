@@ -90,11 +90,26 @@ Koala is structured as strict unidirectionally dependent layers. Every layer is 
 
 ---
 
-## Getting Started
+---
 
-- [Installation](getting-started/installation.md) — Quick install via pip, uv, or git
-- [Quickstart](getting-started/quickstart.md) — The five patterns you will use daily
-- [Architecture](concepts/architecture.md) — How the layered architecture works
-- [Context Management & Pruning](guide/context-policy.md) — Prevent context window overflow safely
-- [Retries & Resilience](guide/resilience.md) — Transport retries and reflection loops
-- [API Reference](reference/core.md) — Detailed class and function reference
+## Where to Go Next
+
+<div class="grid-cards">
+  <div class="feature-card">
+    <h3>🚀 <a href="getting-started/quickstart/">5-Minute Quickstart</a></h3>
+    <p>Build your first tool-calling agent with streaming output and Pydantic validation in 5 minutes.</p>
+  </div>
+  <div class="feature-card">
+    <h3>⚙️ <a href="getting-started/installation/">Installation & Setup</a></h3>
+    <p>Install via pip or uv with optional extras for OpenTelemetry, MCP servers, and local LLMs.</p>
+  </div>
+  <div class="feature-card">
+    <h3>🌐 <a href="getting-started/providers/">Provider Directory</a></h3>
+    <p>Connect Groq, OpenAI, Anthropic, Ollama, LM Studio, DeepSeek, or any custom endpoint.</p>
+  </div>
+  <div class="feature-card">
+    <h3>📚 <a href="guide/agents/">Comprehensive Guides</a></h3>
+    <p>Explore parallel execution, context pruning, reflection, HITL approval, and multi-agent swarms.</p>
+  </div>
+</div>
+

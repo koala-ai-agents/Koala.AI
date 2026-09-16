@@ -16,20 +16,9 @@ theme:
     text: Inter
     code: JetBrains Mono
   palette:
-    # Dark mode is primary / default
-    - scheme: slate
-      primary: indigo
-      accent: cyan
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    # Light mode toggle
-    - scheme: default
-      primary: indigo
-      accent: cyan
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+    scheme: slate
+    primary: indigo
+    accent: cyan
   features:
     - navigation.instant
     - navigation.tracking
@@ -83,44 +72,48 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 nav:
-  - Home: index.md
   - Getting Started:
+      - Overview: index.md
+      - Quickstart (5 min): getting-started/quickstart.md
       - Installation: getting-started/installation.md
-      - Quickstart: getting-started/quickstart.md
-      - Configuration: getting-started/configuration.md
-      - Providers: getting-started/providers.md
-  - Concepts:
-      - Architecture: concepts/architecture.md
-      - The layer stack: concepts/layers.md
-      - Runnable + events: concepts/runnable-and-events.md
+      - Supported Providers: getting-started/providers.md
+      - Configuration & Keys: getting-started/configuration.md
   - Guides:
-      - Agents: guide/agents.md
-      - Tools: guide/tools.md
-      - Models: guide/models.md
-      - Context policy & pruning: guide/context-policy.md
-      - Retries & resilience: guide/resilience.md
-      - Memory: guide/memory.md
-      - Behaviors: guide/behaviors.md
-      - Structured output: guide/structured-output.md
-      - Handoffs: guide/handoffs.md
-      - Approval + HITL: guide/approval-hitl.md
-      - Sessions: guide/sessions.md
-      - Streaming (show): guide/streaming.md
-      - Flow orchestration: guide/flow.md
-      - MCP tools: guide/mcp.md
-      - OpenTelemetry: guide/observability.md
-      - Checkpointing: guide/checkpointing.md
+      - Core Agent:
+          - Building Agents: guide/agents.md
+          - Tools & Function Calling: guide/tools.md
+          - Models & Settings: guide/models.md
+      - Resilience & Control:
+          - Context Management & Pruning: guide/context-policy.md
+          - Retries & Error Handling: guide/resilience.md
+          - Structured Output & Reflection: guide/structured-output.md
+      - Multi-Turn & Collaboration:
+          - Memory & Conversation History: guide/memory.md
+          - Multi-Agent Handoffs: guide/handoffs.md
+          - Human-in-the-Loop Approvals: guide/approval-hitl.md
+          - Interactive Sessions: guide/sessions.md
+          - Composable Behaviors: guide/behaviors.md
+      - Advanced Systems:
+          - Live Streaming & Terminal UI: guide/streaming.md
+          - Durable Checkpointing: guide/checkpointing.md
+          - DAG Flow Orchestration: guide/flow.md
+          - Model Context Protocol (MCP): guide/mcp.md
+          - OpenTelemetry Observability: guide/observability.md
+  - Architecture:
+      - Design Principles: concepts/architecture.md
+      - The Layer Stack: concepts/layers.md
+      - Runnable & Events: concepts/runnable-and-events.md
   - API Reference:
       - koala.core: reference/core.md
+      - koala.agents: reference/agents.md
       - koala.models: reference/models.md
       - koala.tools: reference/tools.md
-      - koala.memory: reference/memory.md
       - koala.behaviors: reference/behaviors.md
-      - koala.agents: reference/agents.md
-      - koala.orchestration: reference/orchestration.md
+      - koala.memory: reference/memory.md
       - koala.harness: reference/harness.md
-      - koala.ui: reference/ui.md
+      - koala.orchestration: reference/orchestration.md
       - koala.observability: reference/observability.md
+      - koala.ui: reference/ui.md
   - Development:
       - Contributing: development/contributing.md
       - Testing: development/testing.md
