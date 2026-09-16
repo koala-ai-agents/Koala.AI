@@ -38,6 +38,7 @@ from .messages import (
     ToolCallBlock,
     ToolResultBlock,
 )
+from .retry import DEFAULT_RETRYABLE_STATUS_CODES, RetryPolicy, parse_retry_after
 from .runnable import Channel, Runnable, acollect, ainvoke, invoke
 from .types import ModelRef, Usage, parse_model_ref
 
@@ -79,6 +80,10 @@ __all__ = [
     "parse_model_ref",
     # capabilities
     "Capability",
+    # retry
+    "RetryPolicy",
+    "DEFAULT_RETRYABLE_STATUS_CODES",
+    "parse_retry_after",
     # approval
     "ApprovalRule",
     "ApprovalDecision",

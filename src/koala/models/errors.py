@@ -17,10 +17,12 @@ class ProviderError(Exception):
         *,
         status: int | None = None,
         body: str | None = None,
+        retry_after: float | None = None,
     ) -> None:
         super().__init__(message)
         self.status = status
         self.body = body
+        self.retry_after = retry_after
 
 
 class AuthenticationError(ProviderError):

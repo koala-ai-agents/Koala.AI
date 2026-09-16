@@ -36,6 +36,7 @@ from ..core.messages import (
     ToolCallBlock,
     ToolResultBlock,
 )
+from ..core.retry import RetryPolicy, parse_retry_after, retry_async
 from ..core.types import Usage
 from .base import BaseProvider
 from .errors import (
@@ -63,6 +64,7 @@ class UniversalProvider(BaseProvider):
         capabilities: Capability set this provider advertises.
         timeout: httpx timeout config, or a float for a simple overall timeout.
         transport: Optional httpx transport for testing (`httpx.MockTransport`).
+        retry_policy: Optional retry policy for transient errors (429, 5xx, timeouts).
     """
 
     def __init__(
@@ -75,11 +77,15 @@ class UniversalProvider(BaseProvider):
         capabilities: frozenset[Capability] = frozenset(),
         timeout: httpx.Timeout | float | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
+        retry_policy: RetryPolicy | None = None,
     ) -> None:
         self.slug = slug
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.capabilities = capabilities
+        self.retry_policy: RetryPolicy = (
+            retry_policy if retry_policy is not None else RetryPolicy()
+        )
         self._default_headers = dict(default_headers or {})
 
         headers: dict[str, str] = {
@@ -138,15 +144,35 @@ class UniversalProvider(BaseProvider):
         # tool_call index -> partial state: {id, name, arguments}
         tool_calls: dict[int, dict[str, Any]] = {}
 
+        async def _open_stream() -> httpx.Response:
+            try:
+                req = self._client.build_request("POST", "/chat/completions", json=payload)
+                resp = await self._client.send(req, stream=True)
+            except httpx.TimeoutException as e:
+                raise ProviderTimeoutError(
+                    f"Request to {self.slug!r} timed out: {e}"
+                ) from e
+            except httpx.ConnectError as e:
+                raise ProviderConnectionError(
+                    f"Could not connect to {self.slug!r}: {e}"
+                ) from e
+
+            if resp.status_code >= 400:
+                body_bytes = await resp.aread()
+                await resp.aclose()
+                retry_after = parse_retry_after(resp.headers.get("retry-after"))
+                self._raise_for_status(
+                    resp.status_code,
+                    body_bytes.decode(errors="replace"),
+                    retry_after=retry_after,
+                )
+            return resp
+
         try:
-            async with self._client.stream(
-                "POST", "/chat/completions", json=payload
-            ) as resp:
-                if resp.status_code >= 400:
-                    body_bytes = await resp.aread()
-                    self._raise_for_status(
-                        resp.status_code, body_bytes.decode(errors="replace")
-                    )
+            resp = await retry_async(
+                _open_stream, self.retry_policy, is_retryable=self._is_retryable_exception
+            )
+            try:
 
                 async for line in resp.aiter_lines():
                     if not line or not line.startswith("data:"):
@@ -191,6 +217,8 @@ class UniversalProvider(BaseProvider):
                                 slot["name"] = name
                             if args := fn.get("arguments"):
                                 slot["arguments"] += args
+            finally:
+                await resp.aclose()
         except httpx.TimeoutException as e:
             raise ProviderTimeoutError(
                 f"Request to {self.slug!r} timed out: {e}"
@@ -251,34 +279,63 @@ class UniversalProvider(BaseProvider):
             payload["stream_options"] = {"include_usage": True}
         return payload
 
+    def _is_retryable_exception(self, exc: Exception) -> tuple[bool, float | None]:
+        if isinstance(exc, RateLimitError):
+            return True, exc.retry_after
+        if isinstance(exc, ProviderServerError):
+            return True, exc.retry_after
+        if isinstance(exc, (ProviderTimeoutError, ProviderConnectionError)):
+            return True, None
+        if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError)):
+            return True, None
+        return False, None
+
     async def _post_json(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
-        try:
-            r = await self._client.post(path, json=payload)
-        except httpx.TimeoutException as e:
-            raise ProviderTimeoutError(
-                f"Request to {self.slug!r} timed out: {e}"
-            ) from e
-        except httpx.ConnectError as e:
-            raise ProviderConnectionError(
-                f"Could not connect to {self.slug!r}: {e}"
-            ) from e
+        async def _attempt() -> dict[str, Any]:
+            try:
+                r = await self._client.post(path, json=payload)
+            except httpx.TimeoutException as e:
+                raise ProviderTimeoutError(
+                    f"Request to {self.slug!r} timed out: {e}"
+                ) from e
+            except httpx.ConnectError as e:
+                raise ProviderConnectionError(
+                    f"Could not connect to {self.slug!r}: {e}"
+                ) from e
 
-        if r.status_code >= 400:
-            self._raise_for_status(r.status_code, r.text)
-        return cast(dict[str, Any], r.json())
+            if r.status_code >= 400:
+                retry_after = parse_retry_after(r.headers.get("retry-after"))
+                self._raise_for_status(r.status_code, r.text, retry_after=retry_after)
+            return cast(dict[str, Any], r.json())
 
-    def _raise_for_status(self, status: int, body: str) -> None:
+        return await retry_async(
+            _attempt, self.retry_policy, is_retryable=self._is_retryable_exception
+        )
+
+    def _raise_for_status(
+        self, status: int, body: str, retry_after: float | None = None
+    ) -> None:
         snippet = body[:500] if body else ""
         message = f"{self.slug} returned HTTP {status}: {snippet}"
         if status in (401, 403):
-            raise AuthenticationError(message, status=status, body=body)
+            raise AuthenticationError(
+                message, status=status, body=body, retry_after=retry_after
+            )
         if status == 429:
-            raise RateLimitError(message, status=status, body=body)
+            raise RateLimitError(
+                message, status=status, body=body, retry_after=retry_after
+            )
         if 400 <= status < 500:
-            raise BadRequestError(message, status=status, body=body)
+            raise BadRequestError(
+                message, status=status, body=body, retry_after=retry_after
+            )
         if 500 <= status < 600:
-            raise ProviderServerError(message, status=status, body=body)
-        raise ProviderError(message, status=status, body=body)
+            raise ProviderServerError(
+                message, status=status, body=body, retry_after=retry_after
+            )
+        raise ProviderError(
+            message, status=status, body=body, retry_after=retry_after
+        )
 
     def _parse_completion(self, data: dict[str, Any]) -> tuple[Message, Usage]:
         """Parse a non-streaming /chat/completions response body."""

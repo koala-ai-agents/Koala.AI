@@ -26,6 +26,7 @@ from ..core.capabilities import Capability
 from ..core.context import RunContext
 from ..core.events import Done, Error, Event, ModelMessage, Output, Start, UsageEvent
 from ..core.messages import Message
+from ..core.retry import RetryPolicy
 from ..core.types import ModelRef, parse_model_ref
 from ..observability.otel import model_span
 from .base import BaseProvider
@@ -65,6 +66,7 @@ class Model:
         settings: ChatSettings | None = None,
         extra: dict[str, Any] | None = None,
         provider_instance: BaseProvider | None = None,
+        retry_policy: RetryPolicy | None = None,
     ) -> None:
         # 1. Resolve provider slug + model name.
         if ref is not None:
@@ -136,6 +138,7 @@ class Model:
                 api_key=resolved_api_key,
                 default_headers=resolved_headers,
                 capabilities=resolved_caps,
+                retry_policy=retry_policy,
             )
         else:
             self.provider = provider_instance
