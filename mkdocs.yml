@@ -16,9 +16,18 @@ theme:
     text: Inter
     code: JetBrains Mono
   palette:
-    scheme: slate
-    primary: indigo
-    accent: cyan
+    - scheme: default
+      primary: white
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
   features:
     - navigation.instant
     - navigation.tracking

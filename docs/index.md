@@ -1,13 +1,13 @@
-# <span class="gradient-text">Koala.AI</span>
+# Koala.AI
 
 <p style="font-size: 1.25rem; font-weight: 500; color: var(--md-default-fg-color--light); margin-top: -0.5rem; margin-bottom: 1.5rem;">
 The modular, event-driven Python framework for production-grade AI agents.
 </p>
 
 <div>
-  <span class="badge badge-green">Python 3.10+</span>
-  <span class="badge badge-blue">10+ Built-in Providers</span>
-  <span class="badge badge-purple">Zero Callback Spaghetti</span>
+  <span class="badge badge-accent">Python 3.12+</span>
+  <span class="badge">10+ Built-in Providers</span>
+  <span class="badge">Zero Callback Spaghetti</span>
   <span class="badge">OpenTelemetry Native</span>
 </div>
 
@@ -17,19 +17,19 @@ One unified `Agent` class, one universal `Model` gateway covering 10+ providers 
 
 <div class="grid-cards">
   <div class="feature-card">
-    <h3>⚡ Bounded Parallel Tools</h3>
+    <h3>Bounded Parallel Tools</h3>
     <p>Executes multi-tool model turns concurrently via <code>asyncio.gather</code> with semaphore concurrency controls, strictly preserving event order and response pairing.</p>
   </div>
   <div class="feature-card">
-    <h3>🔄 Automatic Retries & Resilience</h3>
+    <h3>Automatic Retries & Resilience</h3>
     <p>Transparent exponential backoff with full jitter and RFC 7231 <code>Retry-After</code> parsing protects against 429 rate limits, server drops, and network timeouts.</p>
   </div>
   <div class="feature-card">
-    <h3>🧠 Atomic Context Pruning</h3>
+    <h3>Atomic Context Pruning</h3>
     <p><code>ContextPolicy</code> compacts history into atomic turns, preventing orphaned tool call errors that break OpenAI, Anthropic, and Groq APIs.</p>
   </div>
   <div class="feature-card">
-    <h3>🎯 Self-Correction Reflection</h3>
+    <h3>Self-Correction Reflection</h3>
     <p>Automated reflection loop intercepts schema validation failures, feeds structured error prompts back to the LLM, and enables self-correction without crashes.</p>
   </div>
 </div>
@@ -96,19 +96,19 @@ Koala is structured as strict unidirectionally dependent layers. Every layer is 
 
 <div class="grid-cards">
   <div class="feature-card">
-    <h3>🚀 <a href="getting-started/quickstart/">5-Minute Quickstart</a></h3>
+    <h3><a href="getting-started/quickstart/">5-Minute Quickstart</a></h3>
     <p>Build your first tool-calling agent with streaming output and Pydantic validation in 5 minutes.</p>
   </div>
   <div class="feature-card">
-    <h3>⚙️ <a href="getting-started/installation/">Installation & Setup</a></h3>
+    <h3><a href="getting-started/installation/">Installation & Setup</a></h3>
     <p>Install via pip or uv with optional extras for OpenTelemetry, MCP servers, and local LLMs.</p>
   </div>
   <div class="feature-card">
-    <h3>🌐 <a href="getting-started/providers/">Provider Directory</a></h3>
+    <h3><a href="getting-started/providers/">Provider Directory</a></h3>
     <p>Connect Groq, OpenAI, Anthropic, Ollama, LM Studio, DeepSeek, or any custom endpoint.</p>
   </div>
   <div class="feature-card">
-    <h3>📚 <a href="guide/agents/">Comprehensive Guides</a></h3>
+    <h3><a href="guide/agents/">Comprehensive Guides</a></h3>
     <p>Explore parallel execution, context pruning, reflection, HITL approval, and multi-agent swarms.</p>
   </div>
 </div>

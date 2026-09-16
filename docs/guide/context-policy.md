@@ -15,13 +15,13 @@ Most LLM providers (OpenAI, Anthropic, Groq, DeepSeek) enforce strict structural
 3. Naive sliding-window truncation (e.g. `messages[-10:]`) cuts arbitrarily through tool call sequences, corrupting conversation history.
 
 ```text
-❌ Naive Truncation:
+[Invalid] Naive Truncation:
 ... [Assistant: call tool_1, tool_2] (TRUNCATED OUT)
     [ToolResult: result 1]           <- 400 Bad Request: missing tool_calls!
     [ToolResult: result 2]
     [User: "Now what?"]
 
-✔ Koala Atomic Turn Compaction:
+[Valid] Koala Atomic Turn Compaction:
     [System prompt]                  <- Always preserved
     ... (older turns pruned cleanly as whole atomic units) ...
     [Assistant: call tool_1, tool_2]

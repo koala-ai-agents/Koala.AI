@@ -241,7 +241,7 @@ takes a `Runnable` can compose them uniformly.
 ## Documentation
 
 Comprehensive guides, architecture overviews, and full API references are hosted at:
-👉 **[https://koala-ai-agents.github.io/Koala.AI/](https://koala-ai-agents.github.io/Koala.AI/)**
+**[https://koala-ai-agents.github.io/Koala.AI/](https://koala-ai-agents.github.io/Koala.AI/)**
 
 ## Examples
 
