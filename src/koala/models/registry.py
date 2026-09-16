@@ -124,7 +124,7 @@ BUILTIN_PROVIDERS: dict[str, ProviderProfile] = {
         base_url="https://openrouter.ai/api/v1",
         env_key="OPENROUTER_API_KEY",
         default_headers={
-            "HTTP-Referer": "https://github.com/PR-HARIHARAN/Koala.AI",
+            "HTTP-Referer": "https://github.com/koala-ai-agents/Koala.AI",
             "X-Title": "Koala.AI",
         },
         capabilities=frozenset(

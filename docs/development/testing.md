@@ -187,6 +187,6 @@ make ci           # format-check + lint + type-check + test
 
 ## Reference
 
-- The full test file list is under [`tests/`](https://github.com/PR-HARIHARAN/Koala.AI/tree/main/tests).
+- The full test file list is under [`tests/`](https://github.com/koala-ai-agents/Koala.AI/tree/main/tests).
 - The `tests/agents/conftest.py` `ScriptedProvider` is the workhorse
   for offline agent tests.

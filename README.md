@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/logo-full.png" alt="Koala Logo" width="100%"/>
+  <img src="https://raw.githubusercontent.com/koala-ai-agents/Koala.AI/main/docs/assets/logo-full.png" alt="Koala Logo" width="100%"/>
 
   # Koala.AI
 
@@ -59,7 +59,7 @@ pip install "koala-ai[mcp,otel]" # All runtime extras
 
 Or install from source for development:
 ```bash
-git clone https://github.com/PR-HARIHARAN/Koala.AI
+git clone https://github.com/koala-ai-agents/Koala.AI
 cd Koala.AI
 uv sync --all-extras
 ```

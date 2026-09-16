@@ -45,7 +45,7 @@ from .tools import tool as tool
 from .ui import ashow as ashow
 from .ui import show as show
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "Agent",

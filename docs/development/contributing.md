@@ -7,7 +7,7 @@ seams are for extending Koala without patching the framework itself.
 ## Setup
 
 ```bash
-git clone https://github.com/PR-HARIHARAN/Koala.AI
+git clone https://github.com/koala-ai-agents/Koala.AI
 cd Koala.AI
 
 uv venv
@@ -116,7 +116,7 @@ on demand.
 
 ## Reporting bugs
 
-Open an issue at [github.com/PR-HARIHARAN/Koala.AI/issues](https://github.com/PR-HARIHARAN/Koala.AI/issues)
+Open an issue at [github.com/koala-ai-agents/Koala.AI/issues](https://github.com/koala-ai-agents/Koala.AI/issues)
 with:
 
 1. Python version + OS.

@@ -7,7 +7,7 @@ lives behind an extra.
 ## From source (recommended while pre-1.0)
 
 ```bash
-git clone https://github.com/PR-HARIHARAN/Koala.AI
+git clone https://github.com/koala-ai-agents/Koala.AI
 cd Koala.AI
 
 # With uv (fastest)
