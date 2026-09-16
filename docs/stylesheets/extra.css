@@ -1,12 +1,105 @@
-/* Force a strictly-monospaced font stack for code blocks so box-drawing
- * characters (─ │ ┌ ┐ └ ┘ ├ ┤) render at exactly one cell wide.
- * Roboto Mono (Material default) can render these fallback-fonted on some
- * systems, breaking ASCII diagrams. */
+/* ==========================================================================
+   Koala.AI Modern Dark Mode & Aesthetic Design System
+   Inspired by modern developer docs: Vercel, Linear, Tailwind, Supabase
+   ========================================================================== */
+
+/* --- 1. Typography & Global Variables --- */
 :root {
-  --md-code-font: "Consolas", "SFMono-Regular", "Menlo", "DejaVu Sans Mono",
-                  "Liberation Mono", "Courier New", monospace;
+  --md-code-font: "JetBrains Mono", "SFMono-Regular", "Consolas", "Menlo",
+                  "Liberation Mono", monospace;
+  --md-text-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                  Roboto, Helvetica, Arial, sans-serif;
+
+  /* Custom Glow & Accent Tokens */
+  --koala-accent-primary: #6366f1;
+  --koala-accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+  --koala-glow-subtle: 0 4px 24px -1px rgba(99, 102, 241, 0.15);
+  --koala-glow-strong: 0 8px 32px -2px rgba(99, 102, 241, 0.35);
+  --koala-border-subtle: rgba(255, 255, 255, 0.08);
+  --koala-border-hover: rgba(99, 102, 241, 0.4);
 }
 
+/* --- 2. Slate (Dark Mode) Custom Colors & Deep Contrast --- */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #0b0f19;
+  --md-default-bg-color--light: #111827;
+  --md-default-bg-color--lighter: #1e293b;
+  --md-default-fg-color: #f1f5f9;
+  --md-default-fg-color--light: #cbd5e1;
+  --md-default-fg-color--lighter: #94a3b8;
+  --md-default-fg-color--lightest: #64748b;
+
+  --md-primary-fg-color: #6366f1;
+  --md-primary-fg-color--dark: #4f46e5;
+  --md-accent-fg-color: #38bdf8;
+
+  --md-code-bg-color: #0f1422;
+  --md-code-fg-color: #e2e8f0;
+
+  --koala-card-bg: rgba(17, 24, 39, 0.7);
+  --koala-card-border: rgba(255, 255, 255, 0.08);
+  --koala-header-bg: rgba(11, 15, 25, 0.85);
+}
+
+/* Light mode refinement */
+[data-md-color-scheme="default"] {
+  --koala-card-bg: #ffffff;
+  --koala-card-border: rgba(0, 0, 0, 0.08);
+  --koala-header-bg: rgba(255, 255, 255, 0.88);
+}
+
+/* --- 3. Header & Navigation Refinement --- */
+.md-header {
+  background-color: var(--koala-header-bg) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--koala-border-subtle);
+}
+
+.md-tabs {
+  background-color: var(--koala-header-bg) !important;
+  border-bottom: 1px solid var(--koala-border-subtle);
+}
+
+.md-tabs__link {
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  color: var(--md-accent-fg-color) !important;
+  opacity: 1;
+}
+
+/* --- 4. Typography, Headings & Hero Gradient --- */
+.md-typeset h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.8em;
+}
+
+.md-typeset h2 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  border-bottom: 1px solid var(--koala-border-subtle);
+  padding-bottom: 0.3em;
+  margin-top: 1.6em;
+}
+
+.md-typeset h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.gradient-text {
+  background: var(--koala-accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+/* --- 5. Code Blocks & Diagrams --- */
 .md-typeset code,
 .md-typeset pre > code,
 .md-typeset .highlight code {
@@ -16,7 +109,218 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Keep box-drawn diagrams a bit tighter so the grid feels crisp. */
+/* Inline code pills */
+.md-typeset :not(pre) > code {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+  color: #a5b4fc !important;
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+  font-size: 0.86em;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+[data-md-color-scheme="default"] .md-typeset :not(pre) > code {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  color: #4338ca !important;
+}
+
+/* Pre code blocks */
+.md-typeset pre {
+  border-radius: 10px;
+  border: 1px solid var(--koala-border-subtle);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  background-color: var(--md-code-bg-color) !important;
+}
+
 .md-typeset pre > code {
-  line-height: 1.35;
+  line-height: 1.45;
+  font-size: 0.88em;
+}
+
+/* Copy button */
+.md-clipboard {
+  color: var(--md-default-fg-color--lighter);
+  transition: color 0.2s ease;
+}
+.md-clipboard:hover {
+  color: var(--md-accent-fg-color);
+}
+
+/* --- 6. Admonitions / Callouts --- */
+.md-typeset .admonition {
+  border-radius: 10px;
+  border-left-width: 4px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--koala-border-subtle);
+  border-left: 4px solid var(--md-primary-fg-color) !important;
+  margin: 1.5em 0;
+  background-color: var(--koala-card-bg);
+  backdrop-filter: blur(8px);
+}
+
+.md-typeset .admonition.tip {
+  border-left-color: #10b981 !important;
+}
+
+.md-typeset .admonition.warning {
+  border-left-color: #f59e0b !important;
+}
+
+.md-typeset .admonition.danger,
+.md-typeset .admonition.caution {
+  border-left-color: #ef4444 !important;
+}
+
+.md-typeset .admonition.note,
+.md-typeset .admonition.info {
+  border-left-color: #38bdf8 !important;
+}
+
+.md-typeset .admonition__title {
+  font-weight: 600;
+}
+
+/* --- 7. Tables --- */
+.md-typeset table:not([class]) {
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--koala-border-subtle);
+  margin: 1.5em 0;
+  width: 100%;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-default-bg-color--lighter);
+  font-weight: 600;
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--koala-border-subtle);
+}
+
+.md-typeset table:not([class]) td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--koala-border-subtle);
+}
+
+.md-typeset table:not([class]) tr:last-child td {
+  border-bottom: none;
+}
+
+.md-typeset table:not([class]) tbody tr:hover {
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+/* --- 8. Feature Cards & Grids --- */
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.feature-card {
+  background: var(--koala-card-bg);
+  border: 1px solid var(--koala-card-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--koala-accent-gradient);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--koala-border-hover);
+  box-shadow: var(--koala-glow-subtle);
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card h3 {
+  margin-top: 0 !important;
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+  color: var(--md-default-fg-color);
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* --- 9. Badges & Micro-elements --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  margin-right: 0.4rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.02em;
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.badge-blue {
+  background: rgba(56, 189, 248, 0.15);
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.badge-purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+/* --- 10. Sidebar & TOC active items --- */
+.md-nav__link--active {
+  color: var(--md-accent-fg-color) !important;
+  font-weight: 600;
+}
+
+/* --- 11. Buttons --- */
+.md-button--primary {
+  background-color: var(--koala-accent-primary) !important;
+  border-color: var(--koala-accent-primary) !important;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.md-button--primary:hover {
+  background-color: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
 }

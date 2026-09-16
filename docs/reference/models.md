@@ -1,7 +1,8 @@
 # `koala.models`
 
-L2 — model wrapper and provider layer. See the [Models guide](../guide/models.md)
-and [Providers](../getting-started/providers.md).
+L2 — model wrapper and provider layer. See the [Models guide](../guide/models.md),
+[Providers](../getting-started/providers.md), and [Retries & resilience](../guide/resilience.md).
+Both `Model` and `UniversalProvider` accept a `retry_policy: RetryPolicy` from `koala.core`.
 
 ## Model
 

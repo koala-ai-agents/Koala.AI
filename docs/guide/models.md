@@ -40,10 +40,11 @@ Constructor kwargs (all keyword-only after `ref`):
 - `settings` — a full `ChatSettings` object.
 - `extra` — raw dict passed unchanged to the provider (`response_format`,
   `tool_choice`, custom fields).
+- `retry_policy` — optional `RetryPolicy` for automatic exponential backoff with full jitter and `Retry-After` compliance (defaults to active `RetryPolicy()`).
 - `provider_instance` — inject your own `BaseProvider` for testing or a
   non-OpenAI wire format.
 
-See [Providers](../getting-started/providers.md) for the registry.
+See [Providers](../getting-started/providers.md) for the registry and [Retries & resilience](resilience.md) for retry details.
 
 ## Non-streaming chat
 
@@ -97,6 +98,28 @@ base = ChatSettings(temperature=0.0)
 override = ChatSettings(temperature=0.7, max_tokens=256)
 merged = base.merge(override)   # temperature=0.7, max_tokens=256
 ```
+
+## Automatic retries & backoff
+
+Every `Model` automatically retries transient failures (HTTP 429 rate limits, 500, 502, 503, 504 server errors, connect errors, and network timeouts). Koala applies exponential backoff with full jitter and parses RFC 7231 `Retry-After` headers:
+
+```python
+from koala import Model
+from koala.core import RetryPolicy
+
+# Configure custom retry behavior
+m = Model(
+    "groq/llama-3.3-70b-versatile",
+    retry_policy=RetryPolicy(
+        max_retries=5,
+        initial_delay=0.5,
+        max_delay=30.0,
+        jitter=True,
+    ),
+)
+```
+
+Both standard non-streaming requests (`model.chat`) and streaming requests (`model.stream` / `model.astream`) are protected. See the [Retries & resilience guide](resilience.md) for full details.
 
 ## Capabilities
 

@@ -107,23 +107,28 @@ async def fetch_user(ctx: RunContext, user_id: str) -> dict:
 The model sees only `user_id` in the schema. Any `pool`, `client`, or
 config on `ctx.deps` is available to the function.
 
-## Error handling
+## Error handling & `ModelRetry`
 
-Two exceptions get special treatment inside the Agent's tool loop:
+Three exceptions get special treatment inside the Agent's tool loop:
 
-- **`ToolValidationError`** — arguments failed schema validation. The
-  agent appends a `ToolResult` with `is_error=True` and lets the model
-  retry with corrected arguments.
-- **`ToolExecutionError`** — the function raised. Same handling —
-  `is_error=True`, model can retry.
-
-Every other exception is wrapped in `ToolExecutionError` automatically,
-preserving the original in `.original`.
+- **`ModelRetry`** (`from koala.core import ModelRetry`) — raised intentionally by your tool code when argument values fail business logic (e.g., record not found, ambiguous query). The agent converts this into a direct instruction for the model: `"Tool requested retry: <message>"`, allowing the LLM to correct its input parameters in the next turn.
+- **`ToolValidationError`** — arguments failed Pydantic schema validation. The agent appends a `ToolResult` with `is_error=True` and lets the model retry with corrected arguments.
+- **`ToolExecutionError`** — an unexpected exception was raised inside the tool function. Wrapped automatically with `is_error=True`, preserving the original exception in `.original`.
 
 ```python
-from koala.tools import ToolExecutionError, ToolValidationError
+from koala import tool
+from koala.core import ModelRetry
 
-# These bubble up naturally; you rarely raise them yourself.
+
+@tool
+def lookup_customer(customer_id: str) -> dict:
+    """Look up customer details by their 6-digit ID."""
+    if not customer_id.isdigit() or len(customer_id) != 6:
+        # Prompt the model to retry with a formatted error
+        raise ModelRetry(
+            f"'{customer_id}' is invalid. Customer IDs must be exactly 6 digits (e.g. 104829)."
+        )
+    ...
 ```
 
 ## Subclassing `BaseTool`

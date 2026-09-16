@@ -1,10 +1,10 @@
 site_name: Koala.AI
 site_description: A Python framework for building AI agents.
 site_author: Hariharan P R
-site_url: https://pr-hariharan.github.io/Koala.AI/
+site_url: https://koala-ai-agents.github.io/Koala.AI/
 
-repo_name: PR-HARIHARAN/Koala.AI
-repo_url: https://github.com/PR-HARIHARAN/Koala.AI
+repo_name: koala-ai-agents/Koala.AI
+repo_url: https://github.com/koala-ai-agents/Koala.AI
 edit_uri: edit/main/docs/
 
 theme:
@@ -12,21 +12,24 @@ theme:
   language: en
   logo: assets/logo.png
   favicon: assets/logo.png
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
+    # Dark mode is primary / default
+    - scheme: slate
       primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: indigo
+      accent: cyan
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+    # Light mode toggle
+    - scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
   features:
     - navigation.instant
     - navigation.tracking
@@ -94,6 +97,8 @@ nav:
       - Agents: guide/agents.md
       - Tools: guide/tools.md
       - Models: guide/models.md
+      - Context policy & pruning: guide/context-policy.md
+      - Retries & resilience: guide/resilience.md
       - Memory: guide/memory.md
       - Behaviors: guide/behaviors.md
       - Structured output: guide/structured-output.md
@@ -126,4 +131,4 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/PR-HARIHARAN/Koala.AI
+      link: https://github.com/koala-ai-agents/Koala.AI

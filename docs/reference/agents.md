@@ -15,6 +15,11 @@ L6 — the tool-calling loop. See the [Agents guide](../guide/agents.md),
 
 ::: koala.agents.agent.AgentTool
 
+## Context policy & pruning
+
+::: koala.agents.context_policy.ContextPolicy
+
+
 ## RunResult
 
 ::: koala.agents.result.RunResult

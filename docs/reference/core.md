@@ -56,3 +56,14 @@ See also the [Runnable + events concept page](../concepts/runnable-and-events.md
 
 ::: koala.core.approval.ApprovalRule
 ::: koala.core.approval.ApprovalResult
+
+## Errors & self-correction
+
+::: koala.core.errors.ModelRetry
+
+## Retries & backoff
+
+::: koala.core.retry.RetryPolicy
+::: koala.core.retry.parse_retry_after
+::: koala.core.retry.DEFAULT_RETRYABLE_STATUS_CODES
+

@@ -25,8 +25,12 @@ agent = Agent(
     model="groq/llama-3.3-70b-versatile",   # str or Model
     instructions="You are a precise assistant.",
     tools=[add],
-    max_iterations=20,      # cap on tool-call loops
-    name="calculator",      # public name; shows up in Start events
+    max_iterations=20,          # cap on tool-call loops
+    name="calculator",          # public name; shows up in Start events
+    parallel_tools=True,        # execute multiple tool calls in parallel (default: True)
+    max_tool_concurrency=10,    # maximum concurrent tool executions (default: 10)
+    max_output_retries=2,       # reflection loop retries on validation failure (default: 0)
+    context_policy=None,        # optional ContextPolicy for token pruning
 )
 ```
 
@@ -122,23 +126,84 @@ Per iteration, `Agent.astream`:
 
 1. Emits `Start` (first iteration only).
 2. Opens an OpenTelemetry `invoke_agent` span (see [Observability](observability.md)).
-3. For each iteration, opens a `chat <model>` child span and calls
+3. Applies `context_policy.prune(messages)` (if configured) to ensure history fits within token budgets without breaking atomic tool turns.
+4. For each iteration, opens a `chat <model>` child span and calls
    `model.provider.stream_chat(...)`.
-4. Forwards every model event (deltas, thinking, message, usage).
-5. If the returned assistant message has no tool calls: parses / validates
-   final output, emits `Output` + `Done`, records `stop_reason="final_output"`.
-6. Otherwise, for each `ToolCall`:
-   - Runs the [approval chain](approval-hitl.md). On `"deny"`, appends a
-     denial `ToolResult`.
-   - On `"allow"`, opens an `execute_tool <name>` child span, calls
-     `tool.run(ctx, arguments)`, appends the `ToolResult`.
-   - `ToolValidationError` and `ToolExecutionError` are caught and appended
-     as error `ToolResult`s so the model can retry.
-7. Loops.
+5. Forwards every model event (deltas, thinking, message, usage).
+6. If the returned assistant message has no tool calls: parses and validates
+   final output against `output_type`.
+   - If validation fails and `max_output_retries > 0`, appends the validation error message and loops so the model can self-correct!
+   - On success, emits `Output` + `Done`, records `stop_reason="final_output"`.
+7. Otherwise, evaluates tool approvals:
+   - For `"deny"`, builds a denied `ToolResult`.
+   - For `"allow"`, executes tools:
+     - When `parallel_tools=True` (default) and multiple tools are called, runs them concurrently using `asyncio.gather` bounded by `max_tool_concurrency`.
+     - When sequential, runs them in order.
+   - Preserves exact call order when emitting `ToolResult` events and updating conversation history.
+   - Surfaces `ModelRetry` exceptions directly to the model as retry requests.
+8. Loops.
 
 Cancellation is checked at the top of every iteration — set
 `ctx.cancel.cancel()` from anywhere and the loop exits after the current
 model call finishes.
+
+## Parallel tool execution
+
+When a model requests multiple tool invocations in a single turn (e.g. searching 3 sources or fetching multiple user records), running them sequentially incurs unnecessary latency.
+
+`Agent` executes multiple approved tool calls concurrently by default:
+
+```python
+agent = Agent(
+    "openai/gpt-4o-mini",
+    tools=[fetch_user, fetch_orders, fetch_recommendations],
+    parallel_tools=True,        # Enabled by default
+    max_tool_concurrency=10,    # Semaphore limit to protect downstream services
+)
+```
+
+- **Safety & Bounded Concurrency**: An `asyncio.Semaphore(max_tool_concurrency)` prevents rate-limit explosions on downstream APIs.
+- **Deterministic Order**: Results are matched back to their exact original `tool_call_id` and emitted in the exact order requested by the model.
+- **Threadpool Offloading**: Synchronous `@tool` functions are automatically offloaded to worker threads via `asyncio.to_thread`.
+
+## Structured output reflection loop
+
+If `output_type` is specified and the model emits a response that fails Pydantic schema validation, Koala can trigger an automated reflection loop:
+
+```python
+agent = Agent(
+    "openai/gpt-4o-mini",
+    output_type=UserProfile,
+    max_output_retries=3,   # Allow up to 3 self-correction iterations
+)
+```
+
+When validation fails, the agent generates an actionable error prompt:
+```text
+Your response did not match the required schema. Validation errors:
+- email: value is not a valid email address
+Please correct the errors and return the valid JSON object strictly matching the schema.
+```
+The model receives this feedback on the subsequent turn and self-corrects. See the [Structured output guide](structured-output.md) and [Retries & resilience guide](resilience.md).
+
+## Context management & token pruning
+
+To keep agent conversations within model context limits across extended runs, attach a `ContextPolicy`:
+
+```python
+from koala.agents import ContextPolicy
+
+agent = Agent(
+    "openai/gpt-4o-mini",
+    context_policy=ContextPolicy(
+        max_tokens=8000,
+        keep_last_turns=4,
+        max_tool_output_tokens=500,
+    ),
+)
+```
+
+`ContextPolicy` groups assistant calls and tool outputs into unbreakable **atomic turns**, preventing orphaned tool call errors. See the [Context management & pruning guide](context-policy.md).
 
 ## Memory
 

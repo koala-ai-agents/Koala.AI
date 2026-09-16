@@ -64,8 +64,34 @@ Only the JSON — no prose, no code fences.
 ```
 
 Then parses the assistant message text with `json.loads(...)` and
-`YourModel.model_validate(...)`. If parsing fails, an `OutputParseError`
-is raised and surfaced as `stop_reason="error"` on the `RunResult`.
+`YourModel.model_validate(...)`. If parsing fails:
+- If `max_output_retries=0`, an `OutputParseError` is raised and surfaced as `stop_reason="error"`.
+- If `max_output_retries > 0`, Koala automatically engages the **reflection loop** (see below).
+
+## Automated reflection & self-correction loop
+
+LLMs occasionally return JSON that violates constraints (e.g. integer out of range, missing fields, invalid formats). Koala provides an automated reflection loop:
+
+```python
+agent = Agent(
+    "openai/gpt-4o-mini",
+    instructions="Extract candidate profile information.",
+    output_type=CandidateProfile,
+    max_output_retries=3,   # Give the model up to 3 chances to fix its mistakes
+)
+```
+
+### How self-correction works:
+1. When Pydantic validation fails, Koala catches `OutputParseError`.
+2. Instead of crashing, Koala formats the specific validation errors into a feedback prompt:
+   ```text
+   Your response did not match the required schema. Validation errors:
+   - years_of_experience: Input should be greater than or equal to 0
+   - email: value is not a valid email address
+   Please correct the errors and return the valid JSON object strictly matching the schema.
+   ```
+3. The prompt is appended to the message history, giving the LLM immediate feedback on what failed so it can fix the invalid fields in its next turn.
+4. If the model succeeds within `max_output_retries`, `result.output` contains the valid Pydantic instance and `result.stop_reason="final_output"`.
 
 ## Nested and complex models
 
